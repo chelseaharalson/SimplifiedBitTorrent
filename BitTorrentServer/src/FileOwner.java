@@ -1,11 +1,8 @@
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.nio.file.Files;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -102,7 +99,7 @@ public class FileOwner {
         writer = new BufferedWriter(new FileWriter(outputFile));
         String flist = "";
         for (int i = 0; i < fList.size(); i++) {
-            flist = flist + fList.get(i) + "\n";
+            flist = flist + fList.get(i).getName() + "\n";
         }
         flist = flist.trim();
         writer.write(flist);
@@ -111,34 +108,34 @@ public class FileOwner {
     
     public static void sendFiles(List<File> files, Socket socket) {
         try {
-            DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+            DataOutputStream dataOS = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
             System.out.println(files.size());
             // write the number of files to the server
-            dos.writeInt(files.size());
-            dos.flush();
+            dataOS.writeInt(files.size());
+            dataOS.flush();
 
             // write filenames 
             for(int i = 0 ; i < files.size(); i++) {
-                dos.writeUTF(files.get(i).getName());
-                dos.flush();
+                dataOS.writeUTF(files.get(i).getName());
+                dataOS.flush();
             }
 
             int n = 0;
-            byte[]buf = new byte[4092];
-            byte[] done = new byte[3];
+            byte[]buff = new byte[4092];
+            byte[] finished = new byte[3];
             String str = "done";
-            done = str.getBytes();
-            for(int i = 0; i < files.size(); i++){
+            finished = str.getBytes();
+            for(int i = 0; i < files.size(); i++) {
                 System.out.println("Sending File: " + files.get(i).getName());
                 FileInputStream fis = new FileInputStream(files.get(i));
-                while((n = fis.read(buf)) != -1){
-                    dos.write(buf,0,n);
-                    dos.flush();
+                while((n = fis.read(buff)) != -1) {
+                    dataOS.write(buff,0,n);
+                    dataOS.flush();
                 }              
-                dos.write(done,0,3);
-                dos.flush();
+                dataOS.write(finished,0,3);
+                dataOS.flush();
             }
-            dos.close();
+            dataOS.close();
         } catch (IOException e) {
             e.printStackTrace();
         }	

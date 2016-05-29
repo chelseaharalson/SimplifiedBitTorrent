@@ -9,8 +9,8 @@ import java.util.List;
  * @author chelsea metcalf
  */
 public class Client {
-    static String textFileList = "fileNameListDOWNLOADED.txt";
-    static String FILE_TO_RECEIVE = "flowerimageDOWNLOADED.jpg";
+    //static String textFileList = "fileNameListDOWNLOADED.txt";
+    //static String FILE_TO_RECEIVE = "flowerimageDOWNLOADED.jpg";
     static int FILE_SIZE = 6022386;
     
     public static void main(String[] args) throws IOException, ClassNotFoundException {
@@ -22,15 +22,12 @@ public class Client {
         String hostName = args[0];
         int portNumber = Integer.parseInt(args[1]);
  
-        int bytesRead;
-        int current = 0;
         FileOutputStream fos = null;
         BufferedOutputStream bos = null;
         Socket sock = null;
         try {
           sock = new Socket(hostName, portNumber);
           System.out.println("Connecting...");
-          
           receive(sock);
         }
         finally {
@@ -38,30 +35,31 @@ public class Client {
           if (bos != null) bos.close();
           if (sock != null) sock.close();
         }
+        
+        //mergeFiles(fileList, new File("FileChunks/merge.jpg"));
     }
     
     public static void receive(Socket socket){
         try {
-            DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-            DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-            //read the number of files from the server
-            int numOfFiles = dis.readInt();
-            ArrayList<File>files = new ArrayList<File>(numOfFiles);
+            DataInputStream dataIS = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+            // read the number of files from the server
+            int numOfFiles = dataIS.readInt();
+            ArrayList<File>fileList = new ArrayList<File>(numOfFiles);
             System.out.println("Number of files to be received: " + numOfFiles);
             // read filenames and add files to arraylist
-            for(int i = 0; i< numOfFiles; i++){
-                File file = new File(dis.readUTF());
-                files.add(file);
+            for(int i = 0; i< numOfFiles; i++) {
+                File file = new File(dataIS.readUTF());
+                fileList.add(file);
             }
             int n = 0;
-            byte[] buf = new byte[FILE_SIZE];
+            byte[] buff = new byte[FILE_SIZE];
 
             // receive files
-            for(int i = 0; i < files.size(); i++){
-                System.out.println("Receiving File: " + files.get(i).getName());
-                FileOutputStream fos = new FileOutputStream("FileChunks/" + files.get(i).getName());
-                while((n = dis.read(buf)) != -1 && n!=3 ) {
-                  fos.write(buf,0,n);
+            for(int i = 0; i < fileList.size(); i++) {
+                System.out.println("Receiving File: " + fileList.get(i).getName());
+                FileOutputStream fos = new FileOutputStream("FileChunks/" + fileList.get(i).getName());
+                while((n = dataIS.read(buff)) != -1 && n!=3 ) {
+                  fos.write(buff,0,n);
                   fos.flush();
                 }
                 fos.close();
