@@ -35,7 +35,7 @@ public class FileOwner {
         }
         int portNumber = Integer.parseInt(args[0]);
         try {
-            splitFile(new File("FileChunks/flowerimage.jpg"));
+            splitFile(new File("flowerimage.jpg"));
             createTextFileList(fileList);
             //System.out.println(fileList);
             //mergeFiles(fileList, new File("FileChunks/merge.jpg"));
@@ -81,10 +81,12 @@ public class FileOwner {
             
             while ((temp = bis.read(buffer)) > 0) {
                 // write each chunk of data into a separate file with different numbers in the name
-                File newFile = new File(f.getParent(), name + "." + String.format("%03d", partCounter++));
+                //File newFile = new File(f.getParent(), name + "." + String.format("%03d", partCounter++));
+                File newFile = new File("FileChunks/" + name + "." + String.format("%03d", partCounter++));
                 try (FileOutputStream out = new FileOutputStream(newFile)) {
                     out.write(buffer, 0, temp); // temp is the chunk size
                     if (!fileList.contains(newFile)) {
+                        //System.out.println("Adding: " + newFile);
                         fileList.add(newFile);
                     }
                     System.out.println("Total # of pieces file is divided into: " + (partCounter-1));

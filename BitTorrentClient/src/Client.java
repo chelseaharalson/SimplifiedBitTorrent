@@ -12,7 +12,7 @@ import java.util.Scanner;
 public class Client {
     static int FILE_SIZE = 6022386;
     static ArrayList<String> fileNeededList = new ArrayList<String>();
-    static ArrayList<File> downloadedList = new ArrayList<File>();
+    static List<File> downloadedList = new ArrayList<File>();
     
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         if (args.length != 2) {
@@ -33,14 +33,24 @@ public class Client {
           //System.out.println(fileNeededList);
           receiveFILES(sock);
           //System.out.println("DOWNLOADED LIST: " + downloadedList);
+          for (int i = 0; i < fileNeededList.size(); i++) {
+              for (int j = 0; j < downloadedList.size(); j++) {
+                  if (fileNeededList.get(i).equals(downloadedList.get(j).getName())) {
+                      //System.out.println(fileNeededList.get(i));
+                      fileNeededList.remove(i);
+                  }
+              }
+          }
+          //System.out.println(fileNeededList.size());
+          if (fileNeededList.size() == 0) {
+              mergeFiles(downloadedList, new File("merge.jpg"));
+          }
         }
         finally {
           if (fos != null) fos.close();
           if (bos != null) bos.close();
           if (sock != null) sock.close();
         }
-        
-        //mergeFiles(fileList, new File("FileChunks/merge.jpg"));
     }
     
     public static void receiveFILES(Socket socket) throws IOException {
@@ -56,6 +66,7 @@ public class Client {
                     long size = dis.readLong();
                     byte[] buff = new byte[(int)size];
                     File file = new File(filename);
+                    //System.out.println("Added: " + filename);
                     downloadedList.add(file);
                     FileOutputStream fos = new FileOutputStream("FileChunks/" + filename);
                     long total = 0;
@@ -79,8 +90,12 @@ public class Client {
     
     public static void mergeFiles(List<File> files, File into) throws IOException {
         try (BufferedOutputStream mergingStream = new BufferedOutputStream(new FileOutputStream(into))) {
+            String fi = "";
             for (File f : files) {
-                Files.copy(f.toPath(), mergingStream);
+                fi = "FileChunks/" + f.getName();
+                File joinedFile = new File(fi);
+                //System.out.println(joinedFile);
+                Files.copy(joinedFile.toPath(), mergingStream);
             }
         }
     }
