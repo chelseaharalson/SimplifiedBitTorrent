@@ -55,8 +55,7 @@ public class FileOwner {
             try {
               sock = serverSocket.accept();
               System.out.println("Accepted connection: " + sock);
-              
-              //sendFiles(fileList, sock);
+
               sendFILES(fileList, sock);
             }
             finally {
@@ -109,10 +108,10 @@ public class FileOwner {
     
     public static void sendFILES(List<File> files, Socket socket) throws IOException {
         DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-        long size;
+        long fileSize;
         dos.writeInt(files.size());
 
-        // send every file in array
+        // send every file in list
         for (File file : files) {
             int bytesRead = 0;
             fis = new FileInputStream(file);
@@ -120,75 +119,28 @@ public class FileOwner {
             // send filename                        
             dos.writeUTF(file.getName());
 
-            // send file size (bytes)
-            dos.writeLong(size = file.length());
+            // send filesize (bytes)
+            dos.writeLong(fileSize = file.length());
 
-            System.out.println("Size: " + size);
+            //System.out.println("File Size: " + fileSize);
 
             // send file 
-            byte[] buf = new byte [(int)file.length()];
+            byte[] buff = new byte [(int)file.length()];
             try {
-                while ((bytesRead = fis.read(buf)) != -1) {
-                    dos.write(buf, 0, bytesRead);
+                while ((bytesRead = fis.read(buff)) != -1) {
+                    dos.write(buff, 0, bytesRead);
                 }
                 dos.flush();
-
-            } catch (IOException ex) {
-                System.out.println("ERROR!!!!");
+            } catch (IOException e) {
+                System.out.println("IO Error!!");
             }
 
-            //close file stream, has been sent at this point
+            // close the filestream
             fis.close();
         }
-
-        System.out.println("Done sending files");
+        System.out.println("Finished sending files");
         dos.close();
         socket.close();
-    }
-    
-    public static void sendFiles(List<File> files, Socket socket) {
-        try {
-            DataOutputStream dataOS = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-            System.out.println(files.size());
-            // write the number of files to the server
-            dataOS.writeInt(files.size());
-            dataOS.flush();
-
-            // write filenames
-            for(int i = 0 ; i < files.size(); i++) {
-                dataOS.writeUTF(files.get(i).getName());
-                dataOS.flush();
-            }
-            
-            // write filesize
-            for(int i = 0 ; i < files.size(); i++) {
-                dataOS.writeLong(files.get(i).length());
-                dataOS.flush();
-            }
-
-            int n = 0;
-            //byte[] buff = new byte[4092];
-            
-            byte[] finished = new byte[3];
-            String str = "done";
-            finished = str.getBytes();
-            for (int i = 0; i < files.size(); i++) {
-                byte[] buff = new byte [(int)files.get(i).length()];
-                System.out.println("Sending File: " + files.get(i).getName() + " (" + buff.length + " bytes)");
-                //System.out.println("Length: " + files.get(i).length());
-                FileInputStream fis = new FileInputStream(files.get(i));
-                while ((n = fis.read(buff)) != -1) {
-                    dataOS.write(buff, 0, n);
-                    System.out.println(n + " bytes");
-                    dataOS.flush();
-                }              
-                dataOS.write(finished, 0, 3);
-                dataOS.flush();
-            }
-            dataOS.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }	
     }
     
     /*public static void mergeFiles(List<File> files, File into) throws IOException {
