@@ -25,8 +25,6 @@ public class FileOwner {
     static FileInputStream fis = null;
     static BufferedInputStream bis = null;
     static OutputStream os = null;
-    //static String FILE_TO_SEND = "FileChunks/flowerimage.jpg";
-    //static String textFile = "fileNameList.txt";
 
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
@@ -36,7 +34,6 @@ public class FileOwner {
         int portNumber = Integer.parseInt(args[0]);
         try {
             splitFile(new File("flowerimage.jpg"));
-            //File oFile = createTextFileList(fileList);
         } catch (IOException ex) {
             Logger.getLogger(FileOwner.class.getName()).log(Level.SEVERE, null, ex);
         }
