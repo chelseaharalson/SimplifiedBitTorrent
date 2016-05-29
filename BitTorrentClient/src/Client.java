@@ -32,56 +32,24 @@ public class Client {
           System.out.println("Connecting...");
           
           receive(sock);
-          
-          //List<File> fList = new ArrayList<File>();
-          
-          // receive files
-          /*for (int i = 0; i < 43; i++) {
-            byte[] byteArray  = new byte [FILE_SIZE];
-            InputStream is = sock.getInputStream();
-            fos = new FileOutputStream("name" + i);
-            bos = new BufferedOutputStream(fos);
-            bytesRead = is.read(byteArray,0,byteArray.length);
-            current = bytesRead;
-
-            do {
-               bytesRead = is.read(byteArray, current, (byteArray.length-current));
-               if(bytesRead >= 0) current += bytesRead;
-            } while(bytesRead > -1);
-
-            bos.write(byteArray, 0 , current);
-            bos.flush();
-            System.out.println("File " + "name"+i + " downloaded (" + current + " bytes read)");
-          }*/
         }
         finally {
-          //if (fos != null) fos.close();
-          //if (bos != null) bos.close();
-          //if (sock != null) sock.close();
+          if (fos != null) fos.close();
+          if (bos != null) bos.close();
+          if (sock != null) sock.close();
         }
     }
-    
-    /*public static void saveFileChunk(int x, byte[] chunk) {
-        try {
-            FileOutputStream fso = new FileOutputStream("FileChunks/" + x, false);
-            fso.write(chunk);
-            fso.flush();
-            fso.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }*/
     
     public static void receive(Socket socket){
         try {
             DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
             //read the number of files from the server
-            int number = dis.readInt();
-            ArrayList<File>files = new ArrayList<File>(number);
-            System.out.println("Number of Files to be received: " +number);
-            //read file names and add files to arraylist
-            for(int i = 0; i< number;i++){
+            int numOfFiles = dis.readInt();
+            ArrayList<File>files = new ArrayList<File>(numOfFiles);
+            System.out.println("Number of files to be received: " + numOfFiles);
+            // read filenames and add files to arraylist
+            for(int i = 0; i< numOfFiles; i++){
                 File file = new File(dis.readUTF());
                 files.add(file);
             }
@@ -101,7 +69,6 @@ public class Client {
 
         } catch (IOException e) {
             e.printStackTrace();
-
         }
     }
     

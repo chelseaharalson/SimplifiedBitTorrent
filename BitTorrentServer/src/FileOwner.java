@@ -60,20 +60,6 @@ public class FileOwner {
               System.out.println("Accepted connection: " + sock);
               
               sendFiles(fileList, sock);
-              
-              // send files
-              /*for (int i = 0; i < fileList.size(); i++) {
-                  System.out.println(fileList.get(i).getName());
-                  byte[] byteArray = new byte [(int)fileList.get(i).length()];
-                  fis = new FileInputStream(fileList.get(i));
-                  bis = new BufferedInputStream(fis);
-                  bis.read(byteArray,0,byteArray.length);
-                  os = sock.getOutputStream();
-                  System.out.println("Sending " + fileList.get(i).getName() + " (" + byteArray.length + " bytes)");
-                  os.write(byteArray,0,byteArray.length);
-                  os.flush();
-                  System.out.println("Done.");
-              }*/
             }
             finally {
               if (bis != null) bis.close();
@@ -127,11 +113,11 @@ public class FileOwner {
         try {
             DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
             System.out.println(files.size());
-            //write the number of files to the server
+            // write the number of files to the server
             dos.writeInt(files.size());
             dos.flush();
 
-            //write file names 
+            // write filenames 
             for(int i = 0 ; i < files.size(); i++) {
                 dos.writeUTF(files.get(i).getName());
                 dos.flush();
@@ -140,7 +126,7 @@ public class FileOwner {
             int n = 0;
             byte[]buf = new byte[4092];
             byte[] done = new byte[3];
-            String str = "done";  // randomly anything
+            String str = "done";
             done = str.getBytes();
             for(int i = 0; i < files.size(); i++){
                 System.out.println("Sending File: " + files.get(i).getName());
