@@ -29,9 +29,9 @@ public class Client {
         try {
           sock = new Socket(hostName, portNumber);
           System.out.println("Connecting...");
+          receiveFILES(sock);
           fileNeededList = neededList("fileNameList.txt");
           //System.out.println(fileNeededList);
-          receiveFILES(sock);
           //System.out.println("DOWNLOADED LIST: " + downloadedList);
           for (int i = 0; i < fileNeededList.size(); i++) {
               for (int j = 0; j < downloadedList.size(); j++) {
@@ -67,16 +67,29 @@ public class Client {
                     byte[] buff = new byte[(int)size];
                     File file = new File(filename);
                     //System.out.println("Added: " + filename);
-                    downloadedList.add(file);
-                    FileOutputStream fos = new FileOutputStream("FileChunks/" + filename);
-                    long total = 0;
-                    int count = 0;       
-                    while ((total < size) && ((count = dis.read(buff, 0, (int) Math.min(buff.length, size - total))) > 0)) {
-                        fos.write(buff, 0, count);
-                        total += count;
+                    if (file.getName().equals("fileNameList.txt")) {
+                        FileOutputStream fos2 = new FileOutputStream(filename);
+                        long total = 0;
+                        int count = 0;       
+                        while ((total < size) && ((count = dis.read(buff, 0, (int) Math.min(buff.length, size - total))) > 0)) {
+                            fos2.write(buff, 0, count);
+                            total += count;
+                        }
+                        fos2.close();
+                        System.out.println("Received File: " + filename + " (" + size + " bytes)");
                     }
-                    fos.close();
-                    System.out.println("Received File: " + filename + " (" + size + " bytes)");
+                    else {
+                        downloadedList.add(file);
+                        FileOutputStream fos = new FileOutputStream("FileChunks/" + filename);
+                        long total = 0;
+                        int count = 0;       
+                        while ((total < size) && ((count = dis.read(buff, 0, (int) Math.min(buff.length, size - total))) > 0)) {
+                            fos.write(buff, 0, count);
+                            total += count;
+                        }
+                        fos.close();
+                        System.out.println("Received File: " + filename + " (" + size + " bytes)");
+                    }
                 }
             }
             catch (EOFException e) {

@@ -36,13 +36,12 @@ public class FileOwner {
         int portNumber = Integer.parseInt(args[0]);
         try {
             splitFile(new File("flowerimage.jpg"));
-            createTextFileList(fileList);
-            //System.out.println(fileList);
-            //mergeFiles(fileList, new File("FileChunks/merge.jpg"));
+            //File oFile = createTextFileList(fileList);
         } catch (IOException ex) {
             Logger.getLogger(FileOwner.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        File oFile = createTextFileList(fileList);
         FileInputStream fis = null;
         BufferedInputStream bis = null;
         OutputStream os = null;
@@ -56,6 +55,7 @@ public class FileOwner {
               sock = serverSocket.accept();
               System.out.println("Accepted connection: " + sock);
 
+              fileList.add(oFile);
               sendFILES(fileList, sock);
             }
             finally {
@@ -95,7 +95,7 @@ public class FileOwner {
         }
     }
     
-    public static void createTextFileList(List<File> fList) throws FileNotFoundException, IOException {
+    public static File createTextFileList(List<File> fList) throws FileNotFoundException, IOException {
         BufferedWriter writer = null;
         File outputFile = new File("fileNameList.txt");
         writer = new BufferedWriter(new FileWriter(outputFile));
@@ -106,6 +106,7 @@ public class FileOwner {
         flist = flist.trim();
         writer.write(flist);
         writer.close();
+        return outputFile;
     }
     
     public static void sendFILES(List<File> files, Socket socket) throws IOException {
@@ -144,13 +145,4 @@ public class FileOwner {
         dos.close();
         socket.close();
     }
-    
-    /*public static void mergeFiles(List<File> files, File into) throws IOException {
-        try (BufferedOutputStream mergingStream = new BufferedOutputStream(new FileOutputStream(into))) {
-            for (File f : files) {
-                Files.copy(f.toPath(), mergingStream);
-            }
-        }
-    }*/
-
 }
