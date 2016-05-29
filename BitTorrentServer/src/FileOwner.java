@@ -56,7 +56,8 @@ public class FileOwner {
               sock = serverSocket.accept();
               System.out.println("Accepted connection: " + sock);
               
-              sendFiles(fileList, sock);
+              //sendFiles(fileList, sock);
+              sendFILES(fileList, sock);
             }
             finally {
               if (bis != null) bis.close();
@@ -106,6 +107,45 @@ public class FileOwner {
         writer.close();
     }
     
+    public static void sendFILES(List<File> files, Socket socket) throws IOException {
+        DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+        long size;
+        dos.writeInt(files.size());
+
+        // send every file in array
+        for (File file : files) {
+            int bytesRead = 0;
+            fis = new FileInputStream(file);
+
+            // send filename                        
+            dos.writeUTF(file.getName());
+
+            // send file size (bytes)
+            dos.writeLong(size = file.length());
+
+            System.out.println("Size: " + size);
+
+            // send file 
+            byte[] buf = new byte [(int)file.length()];
+            try {
+                while ((bytesRead = fis.read(buf)) != -1) {
+                    dos.write(buf, 0, bytesRead);
+                }
+                dos.flush();
+
+            } catch (IOException ex) {
+                System.out.println("ERROR!!!!");
+            }
+
+            //close file stream, has been sent at this point
+            fis.close();
+        }
+
+        System.out.println("Done sending files");
+        dos.close();
+        socket.close();
+    }
+    
     public static void sendFiles(List<File> files, Socket socket) {
         try {
             DataOutputStream dataOS = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
@@ -114,25 +154,35 @@ public class FileOwner {
             dataOS.writeInt(files.size());
             dataOS.flush();
 
-            // write filenames 
+            // write filenames
             for(int i = 0 ; i < files.size(); i++) {
                 dataOS.writeUTF(files.get(i).getName());
                 dataOS.flush();
             }
+            
+            // write filesize
+            for(int i = 0 ; i < files.size(); i++) {
+                dataOS.writeLong(files.get(i).length());
+                dataOS.flush();
+            }
 
             int n = 0;
-            byte[] buff = new byte[4092];
+            //byte[] buff = new byte[4092];
+            
             byte[] finished = new byte[3];
             String str = "done";
             finished = str.getBytes();
-            for(int i = 0; i < files.size(); i++) {
-                System.out.println("Sending File: " + files.get(i).getName());
+            for (int i = 0; i < files.size(); i++) {
+                byte[] buff = new byte [(int)files.get(i).length()];
+                System.out.println("Sending File: " + files.get(i).getName() + " (" + buff.length + " bytes)");
+                //System.out.println("Length: " + files.get(i).length());
                 FileInputStream fis = new FileInputStream(files.get(i));
-                while((n = fis.read(buff)) != -1) {
-                    dataOS.write(buff,0,n);
+                while ((n = fis.read(buff)) != -1) {
+                    dataOS.write(buff, 0, n);
+                    System.out.println(n + " bytes");
                     dataOS.flush();
                 }              
-                dataOS.write(finished,0,3);
+                dataOS.write(finished, 0, 3);
                 dataOS.flush();
             }
             dataOS.close();
