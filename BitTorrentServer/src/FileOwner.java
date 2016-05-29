@@ -121,7 +121,7 @@ public class FileOwner {
             }
 
             int n = 0;
-            byte[]buff = new byte[4092];
+            byte[] buff = new byte[4092];
             byte[] finished = new byte[3];
             String str = "done";
             finished = str.getBytes();

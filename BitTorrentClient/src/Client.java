@@ -3,6 +3,7 @@ import java.net.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 /**
  *
@@ -12,6 +13,7 @@ public class Client {
     //static String textFileList = "fileNameListDOWNLOADED.txt";
     //static String FILE_TO_RECEIVE = "flowerimageDOWNLOADED.jpg";
     static int FILE_SIZE = 6022386;
+    static ArrayList<String> fileNeededList = new ArrayList<String>();
     
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         if (args.length != 2) {
@@ -28,6 +30,8 @@ public class Client {
         try {
           sock = new Socket(hostName, portNumber);
           System.out.println("Connecting...");
+          fileNeededList = neededList("fileNameList.txt");
+          //System.out.println(fileNeededList);
           receive(sock);
         }
         finally {
@@ -76,5 +80,15 @@ public class Client {
                 Files.copy(f.toPath(), mergingStream);
             }
         }
+    }
+    
+    public static ArrayList<String> neededList(String fileName) throws FileNotFoundException {
+        Scanner s = new Scanner(new File(fileName));
+        ArrayList<String> fList = new ArrayList<String>();
+        while (s.hasNextLine()) {
+            fList.add(s.nextLine());
+        }
+        s.close();
+        return fList;
     }
 }
