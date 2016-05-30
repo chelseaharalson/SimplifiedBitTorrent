@@ -52,7 +52,7 @@ public class Server extends Thread {
     @Override
     public void run() {
         try {
-            File oFile = createTextFileList(fileList);
+            //File oFile = createTextFileList(fileList);
             FileInputStream fis = null;
             BufferedInputStream bis = null;
             OutputStream os = null;
@@ -66,7 +66,7 @@ public class Server extends Thread {
                         sock = serverSocket.accept();
                         System.out.println("Accepted connection: " + sock);
                         readyforClient.setValue(true);
-                        fileList.add(oFile);
+                        //fileList.add(oFile);
                         sendFILES(fileList, sock);
                     }
                     finally {
@@ -94,6 +94,8 @@ public class Server extends Thread {
         
         try {
             splitFile(new File("flowerimage.jpg"));
+            File oFile = createTextFileList(fileList);
+            fileList.add(oFile);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
