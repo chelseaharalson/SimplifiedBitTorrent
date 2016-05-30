@@ -19,12 +19,53 @@ import java.net.*;
  *
  * @author chelsea metcalf
  */
-public class FileOwner {
+
+public class Server extends Thread {
     
     static List<File> fileList = new ArrayList<File>();
     static FileInputStream fis = null;
     static BufferedInputStream bis = null;
     static OutputStream os = null;
+    int pNumber = 0;
+    
+    public Server(int portNumber) {
+        pNumber = portNumber;
+    }
+    
+    public void run() {
+        try {
+            File oFile = createTextFileList(fileList);
+            FileInputStream fis = null;
+            BufferedInputStream bis = null;
+            OutputStream os = null;
+            ServerSocket serverSocket = null;
+            Socket sock = null;
+            try {
+                serverSocket = new ServerSocket(pNumber);
+                while (true) {
+                    System.out.println("Waiting...");
+                    try {
+                        sock = serverSocket.accept();
+                        System.out.println("Accepted connection: " + sock);
+                        
+                        fileList.add(oFile);
+                        sendFILES(fileList, sock);
+                    }
+                    finally {
+                        if (bis != null) bis.close();
+                        if (os != null) os.close();
+                        if (sock!=null) sock.close();
+                    }
+                }
+            }
+            finally {
+                if (serverSocket != null) serverSocket.close();
+            }
+        }
+        catch (IOException ex) {
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
@@ -32,39 +73,15 @@ public class FileOwner {
             System.exit(1);
         }
         int portNumber = Integer.parseInt(args[0]);
+        
         try {
             splitFile(new File("flowerimage.jpg"));
         } catch (IOException ex) {
-            Logger.getLogger(FileOwner.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        File oFile = createTextFileList(fileList);
-        FileInputStream fis = null;
-        BufferedInputStream bis = null;
-        OutputStream os = null;
-        ServerSocket serverSocket = null;
-        Socket sock = null;
-        try {
-          serverSocket = new ServerSocket(portNumber);
-          while (true) {
-            System.out.println("Waiting...");
-            try {
-              sock = serverSocket.accept();
-              System.out.println("Accepted connection: " + sock);
-
-              fileList.add(oFile);
-              sendFILES(fileList, sock);
-            }
-            finally {
-              if (bis != null) bis.close();
-              if (os != null) os.close();
-              if (sock!=null) sock.close();
-            }
-          }
-        }
-        finally {
-          if (serverSocket != null) serverSocket.close();
-        }
+        Thread t1 = new Server(portNumber);
+        t1.start();
     }
     
     public static void splitFile(File f) throws IOException {
