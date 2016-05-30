@@ -22,16 +22,34 @@ import java.net.*;
 
 public class Server extends Thread {
     
+    public static class ReadyForClient {
+        private boolean ready = true;
+        
+        public synchronized void setValue(boolean val) {
+            ready = val;
+        }
+        
+        public synchronized boolean read() {
+            return ready;
+        }
+    }
+
     static List<File> fileList = new ArrayList<File>();
     static FileInputStream fis = null;
     static BufferedInputStream bis = null;
     static OutputStream os = null;
     int pNumber = 0;
+    final static ReadyForClient readyforClient = new ReadyForClient();
     
     public Server(int portNumber) {
         pNumber = portNumber;
     }
     
+    /*public static synchronized void setClientValue() {
+        readyForClient = true;
+    }*/
+    
+    @Override
     public void run() {
         try {
             File oFile = createTextFileList(fileList);
@@ -42,12 +60,12 @@ public class Server extends Thread {
             Socket sock = null;
             try {
                 serverSocket = new ServerSocket(pNumber);
-                while (true) {
+                //while (true) {
                     System.out.println("Waiting...");
                     try {
                         sock = serverSocket.accept();
                         System.out.println("Accepted connection: " + sock);
-                        
+                        readyforClient.setValue(true);
                         fileList.add(oFile);
                         sendFILES(fileList, sock);
                     }
@@ -56,7 +74,7 @@ public class Server extends Thread {
                         if (os != null) os.close();
                         if (sock!=null) sock.close();
                     }
-                }
+                //}
             }
             finally {
                 if (serverSocket != null) serverSocket.close();
@@ -77,11 +95,22 @@ public class Server extends Thread {
         try {
             splitFile(new File("flowerimage.jpg"));
         } catch (IOException ex) {
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            ex.printStackTrace();
         }
-        
-        Thread t1 = new Server(portNumber);
-        t1.start();
+                
+        readyforClient.setValue(true);
+        while (true) {
+            if (readyforClient.read()) {
+                try {
+                    Thread.sleep(100);
+                    new Server(portNumber).start(); 
+                    //System.out.println("READY FOR CLIENT!! " + readyforClient.read());
+                    readyforClient.setValue(false); 
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
     }
     
     public static void splitFile(File f) throws IOException {
@@ -146,6 +175,7 @@ public class Server extends Thread {
             try {
                 while ((bytesRead = fis.read(buff)) != -1) {
                     dos.write(buff, 0, bytesRead);
+                    System.out.println("Sending file: " + file.getName() + " (" + buff.length + " bytes)");
                 }
                 dos.flush();
             } catch (IOException e) {
