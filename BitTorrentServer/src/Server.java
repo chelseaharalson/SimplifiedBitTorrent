@@ -35,6 +35,9 @@ public class Server extends Thread {
     }
 
     static List<File> fileList = new ArrayList<File>();
+    static List<File> partialFileList = new ArrayList<File>();
+    static int filePosition = 1;
+    static int numOfFiles = 0;
     static FileInputStream fis = null;
     static BufferedInputStream bis = null;
     static OutputStream os = null;
@@ -52,7 +55,7 @@ public class Server extends Thread {
     @Override
     public void run() {
         try {
-            //File oFile = createTextFileList(fileList);
+            createFileList("image2.jpg");
             FileInputStream fis = null;
             BufferedInputStream bis = null;
             OutputStream os = null;
@@ -61,19 +64,26 @@ public class Server extends Thread {
             try {
                 serverSocket = new ServerSocket(pNumber);
                 //while (true) {
-                    System.out.println("Waiting...");
-                    try {
-                        sock = serverSocket.accept();
-                        System.out.println("Accepted connection: " + sock);
-                        readyforClient.setValue(true);
-                        //fileList.add(oFile);
-                        sendFILES(fileList, sock);
-                    }
-                    finally {
-                        if (bis != null) bis.close();
-                        if (os != null) os.close();
-                        if (sock!=null) sock.close();
-                    }
+                System.out.println("Waiting...");
+                try {
+                    sock = serverSocket.accept();
+                    System.out.println("Accepted connection: " + sock);
+                    readyforClient.setValue(true);
+                    /*try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }*/
+                    File oFile = createTextFileList(fileList);
+                    partialFileList.add(oFile);
+                    //sendFILES(fileList, sock);
+                    sendFILES(partialFileList, sock);
+                }
+                finally {
+                    if (bis != null) bis.close();
+                    if (os != null) os.close();
+                    if (sock != null) sock.close();
+                }
                 //}
             }
             finally {
@@ -81,21 +91,24 @@ public class Server extends Thread {
             }
         }
         catch (IOException ex) {
-            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            ex.printStackTrace();
         }
     }
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 1) {
-            System.err.println("Usage: java Server <port number>");
+        if (args.length != 2) {
+            System.err.println("Usage: java Server <port number> <numOfFiles>");
             System.exit(1);
         }
         int portNumber = Integer.parseInt(args[0]);
+        numOfFiles = Integer.parseInt(args[1]);
         
         try {
-            splitFile(new File("flowerimage.jpg"));
-            File oFile = createTextFileList(fileList);
-            fileList.add(oFile);
+            splitFile(new File("image2.jpg"));
+            //File oFile = createTextFileList(fileList);
+            //System.out.println("Added: " + oFile.getName());
+            //fileList.add(oFile);
+            //partialFileList.add(oFile);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -105,6 +118,8 @@ public class Server extends Thread {
             if (readyforClient.read()) {
                 try {
                     Thread.sleep(100);
+                    //Thread.sleep(6000);
+                    //System.out.println(partialFileList);
                     new Server(portNumber).start(); 
                     //System.out.println("READY FOR CLIENT!! " + readyforClient.read());
                     readyforClient.setValue(false); 
@@ -140,6 +155,20 @@ public class Server extends Thread {
         }
     }
     
+    public static void createFileList(String fileName) {
+        int partCounter = 1;
+        String fName = "";
+        partialFileList.clear();
+        for (File f : fileList) {
+            fName = fileName + "." + String.format("%03d", partCounter++);
+            if (f.getName().equals(fName) && partCounter >= filePosition && partCounter <= filePosition+numOfFiles) {
+                //System.out.println("f.getName(): " + f.getName() + " fileName: " + fName);
+                partialFileList.add(f);
+            }
+        }
+        filePosition = filePosition + numOfFiles;
+    }
+    
     public static File createTextFileList(List<File> fList) throws FileNotFoundException, IOException {
         BufferedWriter writer = null;
         File outputFile = new File("fileNameList.txt");
@@ -163,15 +192,11 @@ public class Server extends Thread {
         for (File file : files) {
             int bytesRead = 0;
             fis = new FileInputStream(file);
-
             // send filename                        
             dos.writeUTF(file.getName());
-
             // send filesize (bytes)
             dos.writeLong(fileSize = file.length());
-
             //System.out.println("File Size: " + fileSize);
-
             // send file 
             byte[] buff = new byte [(int)file.length()];
             try {
@@ -183,7 +208,6 @@ public class Server extends Thread {
             } catch (IOException e) {
                 System.out.println("IO Error!!");
             }
-
             // close the filestream
             fis.close();
         }
