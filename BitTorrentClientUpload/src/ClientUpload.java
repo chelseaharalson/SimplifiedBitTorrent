@@ -13,6 +13,8 @@ public class ClientUpload extends Thread {
 
     static ArrayList<String> fileNeededList = new ArrayList<String>();
     static List<File> downloadedList = new ArrayList<File>();
+    static ArrayList<String> uploadList = new ArrayList<String>();
+    static List<File> uploadFileList = new ArrayList<File>();
     static String hostName = "";
     static String downloadNeighbor = "";
     static String uploadNeighbor = "";
@@ -67,7 +69,7 @@ public class ClientUpload extends Thread {
         myPortNumber = Integer.parseInt(args[6]);
         
         // Initialize - get files from server
-        //initialPull(serverName, serverPortNumber);
+        initialPull(serverName, serverPortNumber);
 
         try {
             Thread.sleep(5000);
@@ -141,7 +143,7 @@ public class ClientUpload extends Thread {
     
     public static void sendFileList() throws IOException, InterruptedException {
         List<File> flist = new ArrayList<File>();
-        flist.add(new File("fileNeededList.txt"));
+        flist.add(new File("uploadFileList.txt"));
         boolean connected = false;
         while (connected == false) {
             try {
@@ -151,8 +153,9 @@ public class ClientUpload extends Thread {
                 sendFILES(flist, sock);
             }
             catch (Exception e) {
-                System.out.println("Trying to download connection... NOT FOUND");
+                System.out.println("Trying to download connection... NOT FOUND on port number " + downloadPortNumber);
                 Thread.sleep(5000);
+                e.printStackTrace();
             }
         }
     }
@@ -169,18 +172,8 @@ public class ClientUpload extends Thread {
                     sock = new Socket(hostName, portNumber);
                     connected = true;
                     System.out.println("Connecting...");
+                    fileNeededList = convertFileToArray("fileNameList.txt");
                     receiveFILES(sock);
-                    fileNeededList = neededList("fileNameList.txt");
-                    //System.out.println(fileNeededList);
-                    //System.out.println("DOWNLOADED LIST: " + downloadedList);
-                    for (int i = 0; i < fileNeededList.size(); i++) {
-                        for (int j = 0; j < downloadedList.size(); j++) {
-                            if (fileNeededList.get(i).equals(downloadedList.get(j).getName())) {
-                                //System.out.println(fileNeededList.get(i));
-                                fileNeededList.remove(i);
-                            }
-                        }
-                    }
                 }
                 catch (Exception e) {
                     System.out.println("Connection failed");
@@ -199,7 +192,7 @@ public class ClientUpload extends Thread {
         }
     }
     
-    public static void receiveFILES(Socket socket) throws IOException {
+    public static void receiveFILES(Socket socket) throws IOException, InterruptedException {
         while (true) {
             DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             try {
@@ -215,11 +208,33 @@ public class ClientUpload extends Thread {
                     if (file.getName().equals("fileNameList.txt")) {
                         saveFile(filename, size, dis);
                     }
-                    else if (file.getName().equals("fileNeededList.txt")) {
+                    else if (file.getName().equals("uploadFileList.txt")) {
                         saveFile(filename, size, dis);
+                        //sendFileList();
+                        uploadList.clear();
+                        uploadList = convertFileToArray(filename);
+                        for (int j = 0; j < uploadList.size(); j++) {
+                            for (int k = 0; k < downloadedList.size(); k++) {
+                                if (uploadList.get(j).equals(downloadedList.get(k).getName())) {
+                                    System.out.println("uploadFileList in receiveFiles: " + "FileChunks/" + downloadedList.get(k).getName());
+                                    uploadFileList.add(new File("FileChunks/" + downloadedList.get(k).getName()));
+                                }
+                            }
+                        }
+                        try {
+                            Socket sock = null;
+                            sock = new Socket(downloadNeighbor, downloadPortNumber);
+                            sendFILES(uploadFileList, sock);
+                        }
+                        catch (Exception e) {
+                            System.out.println("Trying to download connection... NOT FOUND on port number " + downloadPortNumber);
+                            Thread.sleep(5000);
+                            e.printStackTrace();
+                        }
                     }
                     else {
                         downloadedList.add(file);
+                        fileNeededList.remove(file.getName());
                         saveFile("FileChunks/"+filename, size, dis);
                     }
                 }
@@ -263,7 +278,7 @@ public class ClientUpload extends Thread {
             try {
                 while ((bytesRead = fis.read(buff)) != -1) {
                     dos.write(buff, 0, bytesRead);
-                    System.out.println("Sending file: " + file.getName() + " (" + buff.length + " bytes)");
+                    System.out.println("Sending file: " + file.getName() + " (" + buff.length + " bytes) on port number " + socket.getPort());
                 }
                 dos.flush();
             } catch (IOException e) {
@@ -289,7 +304,7 @@ public class ClientUpload extends Thread {
         }
     }
     
-    public static ArrayList<String> neededList(String fileName) throws FileNotFoundException {
+    public static ArrayList<String> convertFileToArray(String fileName) throws FileNotFoundException {
         Scanner s = new Scanner(new File(fileName));
         ArrayList<String> fList = new ArrayList<String>();
         while (s.hasNextLine()) {

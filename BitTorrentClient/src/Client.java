@@ -13,6 +13,8 @@ public class Client extends Thread {
 
     static ArrayList<String> fileNeededList = new ArrayList<String>();
     static List<File> downloadedList = new ArrayList<File>();
+    static ArrayList<String> uploadList = new ArrayList<String>();
+    static List<File> uploadFileList = new ArrayList<File>();
     static String hostName = "";
     static String downloadNeighbor = "";
     static String uploadNeighbor = "";
@@ -67,7 +69,7 @@ public class Client extends Thread {
         myPortNumber = Integer.parseInt(args[6]);
         
         // Initialize - get files from server
-        //initialPull(serverName, serverPortNumber);
+        initialPull(serverName, serverPortNumber);
 
         try {
             Thread.sleep(5000);
@@ -141,8 +143,12 @@ public class Client extends Thread {
     
     public static void sendFileList() throws IOException, InterruptedException {
         List<File> flist = new ArrayList<File>();
-        flist.add(new File("fileNeededList.txt"));
+        // convertArrayToFile(arrayList, fileName);
+        // pass in files needed array, uploadFileList.txt
+        // that's how uploadFileList is created
+        flist.add(new File("uploadFileList.txt"));
         boolean connected = false;
+        // TO DO
         while (connected == false) {
             try {
                 Socket sock = null;
@@ -153,7 +159,7 @@ public class Client extends Thread {
             catch (Exception e) {
                 System.out.println("Trying to download connection... NOT FOUND on port number " + downloadPortNumber);
                 Thread.sleep(5000);
-                e.printStackTrace();
+                //e.printStackTrace();
             }
         }
     }
@@ -170,18 +176,8 @@ public class Client extends Thread {
                     sock = new Socket(hostName, portNumber);
                     connected = true;
                     System.out.println("Connecting...");
+                    fileNeededList = convertFileToArray("fileNameList.txt");
                     receiveFILES(sock);
-                    fileNeededList = neededList("fileNameList.txt");
-                    //System.out.println(fileNeededList);
-                    //System.out.println("DOWNLOADED LIST: " + downloadedList);
-                    for (int i = 0; i < fileNeededList.size(); i++) {
-                        for (int j = 0; j < downloadedList.size(); j++) {
-                            if (fileNeededList.get(i).equals(downloadedList.get(j).getName())) {
-                                //System.out.println(fileNeededList.get(i));
-                                fileNeededList.remove(i);
-                            }
-                        }
-                    }
                 }
                 catch (Exception e) {
                     System.out.println("Connection failed");
@@ -200,7 +196,7 @@ public class Client extends Thread {
         }
     }
     
-    public static void receiveFILES(Socket socket) throws IOException {
+    public static void receiveFILES(Socket socket) throws IOException, InterruptedException {
         while (true) {
             DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             try {
@@ -216,11 +212,33 @@ public class Client extends Thread {
                     if (file.getName().equals("fileNameList.txt")) {
                         saveFile(filename, size, dis);
                     }
-                    else if (file.getName().equals("fileNeededList.txt")) {
-                        // TO DO!!
+                    else if (file.getName().equals("uploadFileList.txt")) {
+                        saveFile(filename, size, dis);
+                        //sendFileList();
+                        uploadList.clear();
+                        uploadList = convertFileToArray(filename);
+                        for (int j = 0; j < uploadList.size(); j++) {
+                            for (int k = 0; k < downloadedList.size(); k++) {
+                                if (uploadList.get(j).equals(downloadedList.get(k).getName())) {
+                                    System.out.println("uploadFileList in receiveFiles: " + "FileChunks/" + downloadedList.get(k).getName());
+                                    uploadFileList.add(new File("FileChunks/" + downloadedList.get(k).getName()));
+                                }
+                            }
+                        }
+                        try {
+                            Socket sock = null;
+                            sock = new Socket(downloadNeighbor, downloadPortNumber);
+                            sendFILES(uploadFileList, sock);
+                        }
+                        catch (Exception e) {
+                            System.out.println("Trying to download connection... NOT FOUND on port number " + downloadPortNumber);
+                            Thread.sleep(5000);
+                            e.printStackTrace();
+                        }
                     }
                     else {
                         downloadedList.add(file);
+                        fileNeededList.remove(file.getName());
                         saveFile("FileChunks/"+filename, size, dis);
                     }
                 }
@@ -290,7 +308,7 @@ public class Client extends Thread {
         }
     }
     
-    public static ArrayList<String> neededList(String fileName) throws FileNotFoundException {
+    public static ArrayList<String> convertFileToArray(String fileName) throws FileNotFoundException {
         Scanner s = new Scanner(new File(fileName));
         ArrayList<String> fList = new ArrayList<String>();
         while (s.hasNextLine()) {

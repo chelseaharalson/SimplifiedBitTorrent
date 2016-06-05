@@ -11,8 +11,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.net.*;
 
 /**
@@ -47,10 +45,6 @@ public class Server extends Thread {
     public Server(int portNumber) {
         pNumber = portNumber;
     }
-    
-    /*public static synchronized void setClientValue() {
-        readyForClient = true;
-    }*/
     
     @Override
     public void run() {
@@ -117,7 +111,7 @@ public class Server extends Thread {
         while (true) {
             if (readyforClient.read()) {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(500);
                     //Thread.sleep(6000);
                     //System.out.println(partialFileList);
                     new Server(portNumber).start(); 
@@ -166,7 +160,7 @@ public class Server extends Thread {
                 partialFileList.add(f);
             }
         }
-        filePosition = filePosition + numOfFiles;
+        filePosition = filePosition + numOfFiles + 1;
     }
     
     public static File createTextFileList(List<File> fList) throws FileNotFoundException, IOException {
@@ -189,20 +183,21 @@ public class Server extends Thread {
         dos.writeInt(files.size());
 
         // send every file in list
-        for (File file : files) {
+        for (int i = 0; i < files.size(); i++) {
+        //for (File file : files) {
             int bytesRead = 0;
-            fis = new FileInputStream(file);
+            fis = new FileInputStream(files.get(i));
             // send filename                        
-            dos.writeUTF(file.getName());
+            dos.writeUTF(files.get(i).getName());
             // send filesize (bytes)
-            dos.writeLong(fileSize = file.length());
+            dos.writeLong(fileSize = files.get(i).length());
             //System.out.println("File Size: " + fileSize);
             // send file 
-            byte[] buff = new byte [(int)file.length()];
+            byte[] buff = new byte [(int)files.get(i).length()];
             try {
                 while ((bytesRead = fis.read(buff)) != -1) {
                     dos.write(buff, 0, bytesRead);
-                    System.out.println("Sending file: " + file.getName() + " (" + buff.length + " bytes)");
+                    System.out.println("Sending file: " + files.get(i).getName() + " (" + buff.length + " bytes)");
                 }
                 dos.flush();
             } catch (IOException e) {
