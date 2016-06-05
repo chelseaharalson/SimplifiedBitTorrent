@@ -4,8 +4,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -18,12 +16,20 @@ public class ClientUpload extends Thread {
     static String hostName = "";
     static String downloadNeighbor = "";
     static String uploadNeighbor = "";
-    static int portNumber = 0;
+    static int serverPortNumber = 0;
+    static int uploadPortNumber = 0;
+    static int downloadPortNumber = 0;
+    static int myPortNumber = 0;
     static String mode = "";
 
     public ClientUpload(String HostName, int PortNumber, String Mode) {
         hostName = HostName;
-        portNumber = PortNumber;
+        serverPortNumber = PortNumber;
+        mode = Mode;
+    }
+    
+    public ClientUpload(int PortNumber, String Mode) {
+        serverPortNumber = PortNumber;
         mode = Mode;
     }
     
@@ -32,27 +38,22 @@ public class ClientUpload extends Thread {
         if (mode.equals("D")) {
             try {
                 //System.out.println("DO DOWNLOAD");
-                doDownload();
-            } catch (IOException ex) {
-                //ex.printStackTrace();
-            } catch (InterruptedException ex) {
+                sendFileList();
+            } catch (IOException | InterruptedException ex) {
                 //ex.printStackTrace();
             }
         }
-        else {
+        else if (mode.equals("L")) {
             try {
-                //System.out.println("DO UPLOAD");
-                doUpload();
-            } catch (IOException ex) {
+                waitForFiles();
+            } catch (IOException | InterruptedException ex) {
                 //ex.printStackTrace();
-            } catch (InterruptedException ex) {
-                
             }
         }
     }
     
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        if (args.length != 4) {
+        if (args.length != 7) {
             System.err.println("Usage: java Client <host name> <host name> <host name> <port number>");
             System.exit(1);
         }
@@ -60,59 +61,46 @@ public class ClientUpload extends Thread {
         String serverName = args[0];
         uploadNeighbor = args[1];
         downloadNeighbor = args[2];
-        portNumber = Integer.parseInt(args[3]);
+        serverPortNumber = Integer.parseInt(args[3]);
+        uploadPortNumber = Integer.parseInt(args[4]);
+        downloadPortNumber = Integer.parseInt(args[5]);
+        myPortNumber = Integer.parseInt(args[6]);
         
         // Initialize - get files from server
-        //socketReceive(serverName, portNumber);
+        //initialPull(serverName, serverPortNumber);
 
         try {
-            new ClientUpload(uploadNeighbor, portNumber, "U").start();
             Thread.sleep(5000);
-            //new ClientUpload(downloadNeighbor, portNumber, "D").start();
+            new ClientUpload(myPortNumber, "L").start();
+            //Thread.sleep(5000);
+            //new ClientUpload(downloadNeighbor, downloadPortNumber, "D").start();
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
 
-        Scanner scanner = new Scanner(System.in);
+        /*Scanner scanner = new Scanner(System.in);
         System.out.print("Press 'q' to quit:\t");
         String input = scanner.nextLine();
         if (input.equals("q")) {
             System.exit(0);
             //new Client(downloadNeighbor, portNumber, "D").start();
-        }
+        }*/
     }
     
-    public static void doDownload() throws IOException, InterruptedException {
-        List<File> flist = new ArrayList<File>();
-        flist.add(new File("fileNameList.txt"));
-        boolean connected = false;
-        while (connected == false) {
-            try {
-                Socket sock = null;
-                sock = new Socket(downloadNeighbor, portNumber);
-                connected = true;
-                sendFILES(flist, sock);
-            }
-            catch (Exception e) {
-                System.out.println("Trying to download connection... NOT FOUND");
-                Thread.sleep(5000);
-            }
-        }
-    }
-    
-    public static void doUpload() throws IOException, InterruptedException {
+    public static void waitForFiles() throws IOException, InterruptedException {
         try {
             FileInputStream fis = null;
             BufferedInputStream bis = null;
             ServerSocket serverSocket = null;
             Socket sock = null;
             try {
-                serverSocket = new ServerSocket(portNumber);
-                System.out.println("Waiting...");
+                serverSocket = new ServerSocket(myPortNumber);
+                System.out.println("Waiting on port " + myPortNumber);
                 try {
                         sock = serverSocket.accept();
                         System.out.println("Accepted connection: " + sock);
-                        while (true) {
+                        receiveFILES(sock);
+                        /*while (true) {
                             DataInputStream dis = new DataInputStream(new BufferedInputStream(sock.getInputStream()));
                             try {
                                 // get number of files being received
@@ -127,15 +115,15 @@ public class ClientUpload extends Thread {
                             catch (EOFException e) {
                                 break;
                             }
-                        }
-                        Thread.sleep(2000);
+                        }*/
+                        /*Thread.sleep(2000);
                         List<File> flist = new ArrayList<File>();
                         flist.add(new File("test.txt"));
                         Socket sendSocket = null;
                         //portNumber++;
                         System.out.println("ADDED TEST.TXT TO SEND ON " + portNumber + "    " + downloadNeighbor);
                         sendSocket = new Socket(downloadNeighbor, portNumber);
-                        sendFILES(flist, sendSocket);
+                        sendFILES(flist, sendSocket);*/
                     }
                 finally {
                     if (bis != null) bis.close();
@@ -151,7 +139,25 @@ public class ClientUpload extends Thread {
         }
     }
     
-    public static void socketReceive(String hostName, int portNumber) throws IOException {
+    public static void sendFileList() throws IOException, InterruptedException {
+        List<File> flist = new ArrayList<File>();
+        flist.add(new File("fileNeededList.txt"));
+        boolean connected = false;
+        while (connected == false) {
+            try {
+                Socket sock = null;
+                sock = new Socket(downloadNeighbor, downloadPortNumber);
+                connected = true;
+                sendFILES(flist, sock);
+            }
+            catch (Exception e) {
+                System.out.println("Trying to download connection... NOT FOUND");
+                Thread.sleep(5000);
+            }
+        }
+    }
+    
+    public static void initialPull(String hostName, int portNumber) throws IOException {
         FileOutputStream fos = null;
         BufferedOutputStream bos = null;
         Socket sock = null;
@@ -163,7 +169,6 @@ public class ClientUpload extends Thread {
                     sock = new Socket(hostName, portNumber);
                     connected = true;
                     System.out.println("Connecting...");
-
                     receiveFILES(sock);
                     fileNeededList = neededList("fileNameList.txt");
                     //System.out.println(fileNeededList);
@@ -175,10 +180,6 @@ public class ClientUpload extends Thread {
                                 fileNeededList.remove(i);
                             }
                         }
-                    }
-                    //System.out.println(fileNeededList.size());
-                    if (fileNeededList.size() == 0) {
-                        mergeFiles(downloadedList, new File("merge.jpg"));
                     }
                 }
                 catch (Exception e) {
@@ -212,6 +213,9 @@ public class ClientUpload extends Thread {
                     File file = new File(filename);
                     //System.out.println("Added: " + filename);
                     if (file.getName().equals("fileNameList.txt")) {
+                        saveFile(filename, size, dis);
+                    }
+                    else if (file.getName().equals("fileNeededList.txt")) {
                         saveFile(filename, size, dis);
                     }
                     else {
