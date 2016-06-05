@@ -129,6 +129,11 @@ public class Server extends Thread {
         int fileSize = 100 * 1024; // 100 kb
         byte[] buffer = new byte[fileSize];
         
+        File fileChunksDir = new File("FileChunks");
+        if(!fileChunksDir.exists()) {
+            fileChunksDir.mkdir();
+        }
+        
         try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
             String name = f.getName();
             int temp = 0;
@@ -197,7 +202,7 @@ public class Server extends Thread {
             try {
                 while ((bytesRead = fis.read(buff)) != -1) {
                     dos.write(buff, 0, bytesRead);
-                    System.out.println("Sending file: " + files.get(i).getName() + " (" + buff.length + " bytes)");
+                    System.out.println("Sending file: " + files.get(i) + " (" + buff.length + " bytes)");
                 }
                 dos.flush();
             } catch (IOException e) {

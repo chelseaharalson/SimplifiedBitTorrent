@@ -143,8 +143,13 @@ public class ClientUpload extends Thread {
     
     public static void sendFileList() throws IOException, InterruptedException {
         List<File> flist = new ArrayList<File>();
+        convertArrayToFile(fileNeededList, "uploadFileList.txt");
+        // convertArrayToFile(arrayList, fileName);
+        // pass in files needed array, uploadFileList.txt
+        // that's how uploadFileList is created
         flist.add(new File("uploadFileList.txt"));
         boolean connected = false;
+        // TO DO
         while (connected == false) {
             try {
                 Socket sock = null;
@@ -155,7 +160,7 @@ public class ClientUpload extends Thread {
             catch (Exception e) {
                 System.out.println("Trying to download connection... NOT FOUND on port number " + downloadPortNumber);
                 Thread.sleep(5000);
-                e.printStackTrace();
+                //e.printStackTrace();
             }
         }
     }
@@ -193,6 +198,11 @@ public class ClientUpload extends Thread {
     }
     
     public static void receiveFILES(Socket socket) throws IOException, InterruptedException {
+        File fileChunksDir = new File("FileChunks");
+        if(!fileChunksDir.exists()) {
+            fileChunksDir.mkdir();
+        }
+        
         while (true) {
             DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             try {
@@ -312,5 +322,13 @@ public class ClientUpload extends Thread {
         }
         s.close();
         return fList;
+    }
+    
+        public static void convertArrayToFile(ArrayList<String> flistArr, String fileName) throws IOException {
+        FileWriter writer = new FileWriter(fileName);
+        for (int i = 0; i < flistArr.size(); i++) {
+            writer.write(flistArr.get(i) + "\n");
+        }
+        writer.close();
     }
 }
