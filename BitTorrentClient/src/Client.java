@@ -143,8 +143,9 @@ public class Client extends Thread {
                     sock = new Socket(hostName, portNumber);
                     connected = true;
                     System.out.println("Connecting on port " + portNumber);
-                    fileNeededList = convertFileToArray("fileNameList.txt");
+                    //fileNeededList = convertFileToArray("fileNameList.txt");
                     receiveFILES(sock);
+                    fileNeededList = convertFileToArray("fileNameList.txt");
                 }
                 catch (Exception e) {
                     System.out.println("Connection failed");
@@ -186,7 +187,6 @@ public class Client extends Thread {
                     }
                     else if (file.getName().equals("uploadFileList.txt")) {
                         saveFile(filename, size, dis);
-                        //sendFileList();
                         uploadList.clear();
                         uploadList = convertFileToArray(filename);
                         for (int j = 0; j < uploadList.size(); j++) {
@@ -218,12 +218,12 @@ public class Client extends Thread {
             catch (EOFException e) {
                 //break;
             }
-            
-            if (fileNeededList.size() == 0) {
-                System.out.println("Merging files");
+
+            /*if (fileNeededList.size() == 0) {
+                System.out.println("Merging files...");
                 mergeFiles(downloadedList, new File("merge.jpg"));
                 done = true;
-            }
+            }*/
         //}
     }
     

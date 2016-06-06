@@ -55,6 +55,10 @@ public class Server extends Thread {
             OutputStream os = null;
             ServerSocket serverSocket = null;
             Socket sock = null;
+            
+            File oFile = createTextFileList(fileList);
+            partialFileList.add(oFile);
+            System.out.println("Created " + oFile);
             try {
                 serverSocket = new ServerSocket(pNumber);
                 //while (true) {
@@ -63,14 +67,6 @@ public class Server extends Thread {
                     sock = serverSocket.accept();
                     System.out.println("Accepted connection: " + sock);
                     readyforClient.setValue(true);
-                    /*try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    }*/
-                    File oFile = createTextFileList(fileList);
-                    partialFileList.add(oFile);
-                    //sendFILES(fileList, sock);
                     sendFILES(partialFileList, sock);
                 }
                 finally {

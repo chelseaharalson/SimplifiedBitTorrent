@@ -23,6 +23,7 @@ public class ClientUpload extends Thread {
     static int downloadPortNumber = 0;
     static int myPortNumber = 0;
     static String mode = "";
+    static boolean done = false;
 
     public ClientUpload(String HostName, int PortNumber, String Mode) {
         hostName = HostName;
@@ -39,7 +40,6 @@ public class ClientUpload extends Thread {
     public void run() {
         if (mode.equals("D")) {
             try {
-                //System.out.println("DO DOWNLOAD");
                 sendFileList();
             } catch (IOException | InterruptedException ex) {
                 //ex.printStackTrace();
@@ -73,20 +73,12 @@ public class ClientUpload extends Thread {
 
         try {
             Thread.sleep(5000);
-            new ClientUpload(myPortNumber, "L").start();
+            new ClientUpload(myPortNumber, "L").start();      // put a readyForClient / read thing
             //Thread.sleep(5000);
             //new ClientUpload(downloadNeighbor, downloadPortNumber, "D").start();
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
-
-        /*Scanner scanner = new Scanner(System.in);
-        System.out.print("Press 'q' to quit:\t");
-        String input = scanner.nextLine();
-        if (input.equals("q")) {
-            System.exit(0);
-            //new Client(downloadNeighbor, portNumber, "D").start();
-        }*/
     }
     
     public static void waitForFiles() throws IOException, InterruptedException {
@@ -100,9 +92,10 @@ public class ClientUpload extends Thread {
                 System.out.println("Waiting on port " + myPortNumber);
                 try {
                         sock = serverSocket.accept();
+                        // set ready flag to true
                         System.out.println("Accepted connection: " + sock);
                         receiveFILES(sock);
-                    }
+                }
                 finally {
                     if (bis != null) bis.close();
                     if (sock != null) sock.close();
@@ -120,9 +113,6 @@ public class ClientUpload extends Thread {
     public static void sendFileList() throws IOException, InterruptedException {
         List<File> flist = new ArrayList<File>();
         convertArrayToFile(fileNeededList, "uploadFileList.txt");
-        // convertArrayToFile(arrayList, fileName);
-        // pass in files needed array, uploadFileList.txt
-        // that's how uploadFileList is created
         flist.add(new File("uploadFileList.txt"));
         boolean connected = false;
         // TO DO
@@ -145,16 +135,17 @@ public class ClientUpload extends Thread {
         FileOutputStream fos = null;
         BufferedOutputStream bos = null;
         Socket sock = null;
-        
+
         boolean connected = false;
         try {
             while (!connected) {
                 try {
                     sock = new Socket(hostName, portNumber);
                     connected = true;
-                    System.out.println("Connecting...");
-                    fileNeededList = convertFileToArray("fileNameList.txt");
+                    System.out.println("Connecting on port " + portNumber);
+                    //fileNeededList = convertFileToArray("fileNameList.txt");
                     receiveFILES(sock);
+                    fileNeededList = convertFileToArray("fileNameList.txt");
                 }
                 catch (Exception e) {
                     System.out.println("Connection failed");
@@ -175,7 +166,7 @@ public class ClientUpload extends Thread {
     
     public static void receiveFILES(Socket socket) throws IOException, InterruptedException {
         File fileChunksDir = new File("FileChunks");
-        if(!fileChunksDir.exists()) {
+        if (!fileChunksDir.exists()) {
             fileChunksDir.mkdir();
         }
         
@@ -228,6 +219,12 @@ public class ClientUpload extends Thread {
             catch (EOFException e) {
                 //break;
             }
+            
+            /*if (fileNeededList.size() == 0) {
+                System.out.println("Merging files");
+                mergeFiles(downloadedList, new File("merge.jpg"));
+                done = true;
+            }*/
         //}
     }
     
@@ -300,7 +297,7 @@ public class ClientUpload extends Thread {
         return fList;
     }
     
-        public static void convertArrayToFile(ArrayList<String> flistArr, String fileName) throws IOException {
+    public static void convertArrayToFile(ArrayList<String> flistArr, String fileName) throws IOException {
         FileWriter writer = new FileWriter(fileName);
         for (int i = 0; i < flistArr.size(); i++) {
             writer.write(flistArr.get(i) + "\n");
