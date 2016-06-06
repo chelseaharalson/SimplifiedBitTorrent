@@ -23,6 +23,7 @@ public class Client extends Thread {
     static int downloadPortNumber = 0;
     static int myPortNumber = 0;
     static String mode = "";
+    static boolean done = false;
 
     public Client(String HostName, int PortNumber, String Mode) {
         hostName = HostName;
@@ -39,7 +40,6 @@ public class Client extends Thread {
     public void run() {
         if (mode.equals("D")) {
             try {
-                //System.out.println("DO DOWNLOAD");
                 sendFileList();
             } catch (IOException | InterruptedException ex) {
                 //ex.printStackTrace();
@@ -73,20 +73,12 @@ public class Client extends Thread {
 
         try {
             Thread.sleep(5000);
-            new Client(myPortNumber, "L").start();
+            new Client(myPortNumber, "L").start();      // put a readyForClient / read thing
             Thread.sleep(5000);
             new Client(downloadNeighbor, downloadPortNumber, "D").start();
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
-
-        /*Scanner scanner = new Scanner(System.in);
-        System.out.print("Press 'q' to quit:\t");
-        String input = scanner.nextLine();
-        if (input.equals("q")) {
-            System.exit(0);
-            //new Client(downloadNeighbor, portNumber, "D").start();
-        }*/
     }
     
     public static void waitForFiles() throws IOException, InterruptedException {
@@ -100,33 +92,10 @@ public class Client extends Thread {
                 System.out.println("Waiting on port " + myPortNumber);
                 try {
                         sock = serverSocket.accept();
+                        // set ready flag to true
                         System.out.println("Accepted connection: " + sock);
                         receiveFILES(sock);
-                        /*while (true) {
-                            DataInputStream dis = new DataInputStream(new BufferedInputStream(sock.getInputStream()));
-                            try {
-                                // get number of files being received
-                                int numOfFiles = dis.readInt();
-                                // read all the files
-                                for (int i = 0; i < numOfFiles; i++) {
-                                    String filename = dis.readUTF();
-                                    long size = dis.readLong();
-                                    saveFile(filename, size, dis);
-                                }
-                            }
-                            catch (EOFException e) {
-                                break;
-                            }
-                        }*/
-                        /*Thread.sleep(2000);
-                        List<File> flist = new ArrayList<File>();
-                        flist.add(new File("test.txt"));
-                        Socket sendSocket = null;
-                        //portNumber++;
-                        System.out.println("ADDED TEST.TXT TO SEND ON " + portNumber + "    " + downloadNeighbor);
-                        sendSocket = new Socket(downloadNeighbor, portNumber);
-                        sendFILES(flist, sendSocket);*/
-                    }
+                }
                 finally {
                     if (bis != null) bis.close();
                     if (sock != null) sock.close();
@@ -144,9 +113,6 @@ public class Client extends Thread {
     public static void sendFileList() throws IOException, InterruptedException {
         List<File> flist = new ArrayList<File>();
         convertArrayToFile(fileNeededList, "uploadFileList.txt");
-        // convertArrayToFile(arrayList, fileName);
-        // pass in files needed array, uploadFileList.txt
-        // that's how uploadFileList is created
         flist.add(new File("uploadFileList.txt"));
         boolean connected = false;
         // TO DO
@@ -176,7 +142,7 @@ public class Client extends Thread {
                 try {
                     sock = new Socket(hostName, portNumber);
                     connected = true;
-                    System.out.println("Connecting...");
+                    System.out.println("Connecting on port " + portNumber);
                     fileNeededList = convertFileToArray("fileNameList.txt");
                     receiveFILES(sock);
                 }
@@ -199,11 +165,11 @@ public class Client extends Thread {
     
     public static void receiveFILES(Socket socket) throws IOException, InterruptedException {
         File fileChunksDir = new File("FileChunks");
-        if(!fileChunksDir.exists()) {
+        if (!fileChunksDir.exists()) {
             fileChunksDir.mkdir();
         }
         
-        while (true) {
+        //while (true) {
             DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             try {
                 // get number of files being received
@@ -250,9 +216,15 @@ public class Client extends Thread {
                 }
             }
             catch (EOFException e) {
-                break;
+                //break;
             }
-        }
+            
+            if (fileNeededList.size() == 0) {
+                System.out.println("Merging files");
+                mergeFiles(downloadedList, new File("merge.jpg"));
+                done = true;
+            }
+        //}
     }
     
     public static void saveFile(String filename, long size, DataInputStream dis) throws IOException {

@@ -58,7 +58,7 @@ public class Server extends Thread {
             try {
                 serverSocket = new ServerSocket(pNumber);
                 //while (true) {
-                System.out.println("Waiting...");
+                System.out.println("Waiting... on port " + pNumber);
                 try {
                     sock = serverSocket.accept();
                     System.out.println("Accepted connection: " + sock);
@@ -130,7 +130,7 @@ public class Server extends Thread {
         byte[] buffer = new byte[fileSize];
         
         File fileChunksDir = new File("FileChunks");
-        if(!fileChunksDir.exists()) {
+        if (!fileChunksDir.exists()) {
             fileChunksDir.mkdir();
         }
         
@@ -155,17 +155,17 @@ public class Server extends Thread {
     }
     
     public static void createFileList(String fileName) {
+        int pos = filePosition;
+        filePosition = filePosition + numOfFiles + 1;
         int partCounter = 1;
         String fName = "";
         partialFileList.clear();
         for (File f : fileList) {
             fName = fileName + "." + String.format("%03d", partCounter++);
-            if (f.getName().equals(fName) && partCounter >= filePosition && partCounter <= filePosition+numOfFiles) {
-                //System.out.println("f.getName(): " + f.getName() + " fileName: " + fName);
+            if (f.getName().equals(fName) && partCounter >= pos && partCounter <= pos+numOfFiles) {
                 partialFileList.add(f);
             }
         }
-        filePosition = filePosition + numOfFiles + 1;
     }
     
     public static File createTextFileList(List<File> fList) throws FileNotFoundException, IOException {
@@ -206,7 +206,7 @@ public class Server extends Thread {
                 }
                 dos.flush();
             } catch (IOException e) {
-                System.out.println("IO Error!!");
+                e.printStackTrace();
             }
             // close the filestream
             fis.close();

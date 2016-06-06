@@ -102,30 +102,6 @@ public class ClientUpload extends Thread {
                         sock = serverSocket.accept();
                         System.out.println("Accepted connection: " + sock);
                         receiveFILES(sock);
-                        /*while (true) {
-                            DataInputStream dis = new DataInputStream(new BufferedInputStream(sock.getInputStream()));
-                            try {
-                                // get number of files being received
-                                int numOfFiles = dis.readInt();
-                                // read all the files
-                                for (int i = 0; i < numOfFiles; i++) {
-                                    String filename = dis.readUTF();
-                                    long size = dis.readLong();
-                                    saveFile(filename, size, dis);
-                                }
-                            }
-                            catch (EOFException e) {
-                                break;
-                            }
-                        }*/
-                        /*Thread.sleep(2000);
-                        List<File> flist = new ArrayList<File>();
-                        flist.add(new File("test.txt"));
-                        Socket sendSocket = null;
-                        //portNumber++;
-                        System.out.println("ADDED TEST.TXT TO SEND ON " + portNumber + "    " + downloadNeighbor);
-                        sendSocket = new Socket(downloadNeighbor, portNumber);
-                        sendFILES(flist, sendSocket);*/
                     }
                 finally {
                     if (bis != null) bis.close();
@@ -203,7 +179,7 @@ public class ClientUpload extends Thread {
             fileChunksDir.mkdir();
         }
         
-        while (true) {
+        //while (true) {
             DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             try {
                 // get number of files being received
@@ -250,9 +226,9 @@ public class ClientUpload extends Thread {
                 }
             }
             catch (EOFException e) {
-                break;
+                //break;
             }
-        }
+        //}
     }
     
     public static void saveFile(String filename, long size, DataInputStream dis) throws IOException {
