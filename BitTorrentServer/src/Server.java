@@ -85,7 +85,7 @@ public class Server extends Thread {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         if (args.length != 2) {
             System.err.println("Usage: java Server <port number> <numOfFiles>");
             System.exit(1);
@@ -95,10 +95,6 @@ public class Server extends Thread {
         
         try {
             splitFile(new File("image2.jpg"));
-            //File oFile = createTextFileList(fileList);
-            //System.out.println("Added: " + oFile.getName());
-            //fileList.add(oFile);
-            //partialFileList.add(oFile);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -106,16 +102,9 @@ public class Server extends Thread {
         readyforClient.setValue(true);
         while (true) {
             if (readyforClient.read()) {
-                try {
-                    Thread.sleep(500);
-                    //Thread.sleep(6000);
-                    //System.out.println(partialFileList);
-                    new Server(portNumber).start(); 
-                    //System.out.println("READY FOR CLIENT!! " + readyforClient.read());
-                    readyforClient.setValue(false); 
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
+                Thread.sleep(500);
+                new Server(portNumber).start();
+                readyforClient.setValue(false); 
             }
         }
     }

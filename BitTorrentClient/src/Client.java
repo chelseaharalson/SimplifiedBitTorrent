@@ -10,6 +10,18 @@ import java.util.Scanner;
  * @author chelsea metcalf
  */
 public class Client extends Thread {
+    
+    public static class ReadyForClient {
+        private boolean ready = true;
+        
+        public synchronized void setValue(boolean val) {
+            ready = val;
+        }
+        
+        public synchronized boolean read() {
+            return ready;
+        }
+    }
 
     static ArrayList<String> fileNeededList = new ArrayList<String>();
     static List<File> downloadedList = new ArrayList<File>();
@@ -24,6 +36,7 @@ public class Client extends Thread {
     static int myPortNumber = 0;
     static String mode = "";
     static boolean done = false;
+    final static ReadyForClient readyforClient = new ReadyForClient();
 
     public Client(String HostName, int PortNumber, String Mode) {
         hostName = HostName;
@@ -54,7 +67,7 @@ public class Client extends Thread {
         }
     }
     
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
         if (args.length != 7) {
             System.err.println("Usage: java Client <host name> <host name> <host name> <port number>");
             System.exit(1);
@@ -71,14 +84,19 @@ public class Client extends Thread {
         // Initialize - get files from server
         initialPull(serverName, serverPortNumber);
 
-        try {
-            Thread.sleep(5000);
-            new Client(myPortNumber, "L").start();      // put a readyForClient / read thing
+        readyforClient.setValue(true);
+        while (true) {
+            if (readyforClient.read()) {
+                Thread.sleep(5000);
+                new Client(myPortNumber, "L").start();      // put a readyForClient / read thing on here
+                //Thread.sleep(5000);
+                //new Client(downloadNeighbor, downloadPortNumber, "D").start();
+            }
             Thread.sleep(5000);
             new Client(downloadNeighbor, downloadPortNumber, "D").start();
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
         }
+        //Thread.sleep(5000);
+        //new Client(downloadNeighbor, downloadPortNumber, "D").start();
     }
     
     public static void waitForFiles() throws IOException, InterruptedException {
@@ -93,6 +111,7 @@ public class Client extends Thread {
                 try {
                         sock = serverSocket.accept();
                         // set ready flag to true
+                        readyforClient.setValue(true);
                         System.out.println("Accepted connection: " + sock);
                         receiveFILES(sock);
                 }
@@ -143,9 +162,9 @@ public class Client extends Thread {
                     sock = new Socket(hostName, portNumber);
                     connected = true;
                     System.out.println("Connecting on port " + portNumber);
-                    //fileNeededList = convertFileToArray("fileNameList.txt");
-                    receiveFILES(sock);
                     fileNeededList = convertFileToArray("fileNameList.txt");
+                    receiveFILES(sock);
+                    //fileNeededList = convertFileToArray("fileNameList.txt");
                 }
                 catch (Exception e) {
                     System.out.println("Connection failed");
@@ -219,11 +238,11 @@ public class Client extends Thread {
                 //break;
             }
 
-            /*if (fileNeededList.size() == 0) {
+            if (fileNeededList.size() == 0) {
                 System.out.println("Merging files...");
                 mergeFiles(downloadedList, new File("merge.jpg"));
                 done = true;
-            }*/
+            }
         //}
     }
     
