@@ -56,9 +56,6 @@ public class Server extends Thread {
             ServerSocket serverSocket = null;
             Socket sock = null;
             
-            File oFile = createTextFileList(fileList);
-            partialFileList.add(oFile);
-            System.out.println("Created " + oFile);
             try {
                 serverSocket = new ServerSocket(pNumber);
                 //while (true) {
@@ -139,12 +136,15 @@ public class Server extends Thread {
         }
     }
     
-    public static void createFileList(String fileName) {
+    public static void createFileList(String fileName) throws IOException {
         int pos = filePosition;
         filePosition = filePosition + numOfFiles + 1;
         int partCounter = 1;
         String fName = "";
         partialFileList.clear();
+        File oFile = createTextFileList(fileList);
+        partialFileList.add(oFile);
+        System.out.println("Created " + oFile);
         for (File f : fileList) {
             fName = fileName + "." + String.format("%03d", partCounter++);
             if (f.getName().equals(fName) && partCounter >= pos && partCounter <= pos+numOfFiles) {
