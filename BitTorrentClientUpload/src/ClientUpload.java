@@ -163,7 +163,7 @@ public class ClientUpload extends Thread {
     }
     
     public static void receiveFILES(Socket socket) throws IOException, InterruptedException {
-        File fileChunksDir = new File("FileChunks");
+        File fileChunksDir = new File("FileChunks-"+myPortNumber);
         if (!fileChunksDir.exists()) {
             fileChunksDir.mkdir();
         }
@@ -191,8 +191,8 @@ public class ClientUpload extends Thread {
                         for (int j = 0; j < uploadList.size(); j++) {
                             for (int k = 0; k < downloadedList.size(); k++) {
                                 if (uploadList.get(j).equals(downloadedList.get(k).getName())) {
-                                    System.out.println("uploadFileList in receiveFiles: " + "FileChunks/" + downloadedList.get(k).getName());
-                                    uploadFileList.add(new File("FileChunks/" + downloadedList.get(k).getName()));
+                                    System.out.println("uploadFileList in receiveFiles: " + "FileChunks-"+myPortNumber+"/" + downloadedList.get(k).getName());
+                                    uploadFileList.add(new File("FileChunks-"+myPortNumber+"/" + downloadedList.get(k).getName()));
                                 }
                             }
                         }
@@ -210,7 +210,7 @@ public class ClientUpload extends Thread {
                     else {
                         downloadedList.add(file);
                         fileNeededList.remove(file.getName());
-                        saveFile("FileChunks/"+filename, size, dis);
+                        saveFile("FileChunks-"+myPortNumber+"/"+filename, size, dis);
                     }
                 }
             }
@@ -278,7 +278,7 @@ public class ClientUpload extends Thread {
         try (BufferedOutputStream mergingStream = new BufferedOutputStream(new FileOutputStream(into))) {
             String fi = "";
             for (File f : files) {
-                fi = "FileChunks/" + f.getName();
+                fi = "FileChunks-"+myPortNumber+"/" + f.getName();
                 File joinedFile = new File(fi);
                 //System.out.println(joinedFile);
                 Files.copy(joinedFile.toPath(), mergingStream);
