@@ -36,6 +36,7 @@ public class Server extends Thread {
     static List<File> partialFileList = new ArrayList<File>();
     static int filePosition = 1;
     static int numOfFiles = 0;
+    static int numberOfFiles = 0;
     static FileInputStream fis = null;
     static BufferedInputStream bis = null;
     static OutputStream os = null;
@@ -131,12 +132,16 @@ public class Server extends Thread {
                         fileList.add(newFile);
                     }
                     System.out.println("Total # of pieces file is divided into: " + (partCounter-1));
+                    numberOfFiles = partCounter - 1;
                 }
             }
         }
     }
     
     public static void createFileList(String fileName) throws IOException {
+        numberOfFiles = (int) Math.ceil((double)numberOfFiles / 5);
+        System.out.println("Number of files to distribute to each peer: " + numberOfFiles);
+        // TO DO: change to numberOfFiles when 5 peers work
         int pos = filePosition;
         filePosition = filePosition + numOfFiles + 1;
         int partCounter = 1;

@@ -59,7 +59,7 @@ public class ClientUpload extends Thread {
     
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
         if (args.length != 7) {
-            System.err.println("Usage: java Client <host name> <host name> <host name> <port number>");
+            System.err.println("Usage: java Client <host name> <server port number> <upload port number> <download port number>");
             System.exit(1);
         }
 
@@ -194,7 +194,7 @@ public class ClientUpload extends Thread {
                         for (int j = 0; j < uploadList.size(); j++) {
                             for (int k = 0; k < downloadedList.size(); k++) {
                                 if (uploadList.get(j).equals(downloadedList.get(k).getName())) {
-                                    System.out.println("uploadFileList in receiveFiles: " + "FileChunks-"+myPortNumber+"/" + downloadedList.get(k).getName());
+                                    System.out.println("Peer-" + myPortNumber + " has this file: " + "FileChunks-"+myPortNumber+"/" + downloadedList.get(k).getName() + " and will send to Peer-" + downloadPortNumber);
                                     uploadFileList.add(new File("FileChunks-"+myPortNumber+"/" + downloadedList.get(k).getName()));
                                 }
                             }
@@ -225,7 +225,8 @@ public class ClientUpload extends Thread {
                 System.out.println("Merging files...");
                 done = true;
                 Collections.sort(downloadedList);
-                mergeFiles(downloadedList, new File("merge.jpg"));
+                String fname = "merge-"+myPortNumber+".jpg";
+                mergeFiles(downloadedList, new File(fname));
             }
         //}
     }
