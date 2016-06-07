@@ -11,6 +11,18 @@ import java.util.Scanner;
  * @author chelsea metcalf
  */
 public class Client extends Thread {
+    
+    public static class ReadyForClient {
+        private boolean ready = true;
+        
+        public synchronized void setValue(boolean val) {
+            ready = val;
+        }
+        
+        public synchronized boolean read() {
+            return ready;
+        }
+    }
 
     static ArrayList<String> fileNeededList = new ArrayList<String>();
     static List<File> downloadedList = new ArrayList<File>();
@@ -25,6 +37,7 @@ public class Client extends Thread {
     static int myPortNumber = 0;
     static String mode = "";
     static boolean done = false;
+    final static ReadyForClient readyforClient = new ReadyForClient();
 
     public Client(String HostName, int PortNumber, String Mode) {
         hostName = HostName;
@@ -41,7 +54,11 @@ public class Client extends Thread {
     public void run() {
         if (mode.equals("D")) {
             try {
-                sendFileList();
+                //System.out.println("Ready for client: " + readyforClient.read());
+                while (readyforClient.read() == false) {
+                    Thread.sleep(5000);
+                    sendFileList();
+                }
             } catch (IOException | InterruptedException ex) {
                 //ex.printStackTrace();
             }
@@ -74,13 +91,12 @@ public class Client extends Thread {
         // Initialize - get files from server
         initialPull(serverName, serverPortNumber);
         
+        readyforClient.setValue(false);
+        
         Thread.sleep(5000);
         new Client(myPortNumber, "L").start();
-        System.out.println("DONE VALUE: " + done);
-        //while (!done) {
-            Thread.sleep(5000);
-            new Client(downloadNeighbor, downloadPortNumber, "D").start();
-        //}
+        Thread.sleep(5000);
+        new Client(downloadNeighbor, downloadPortNumber, "D").start();
     }
     
     public static void waitForFiles() throws IOException, InterruptedException {
@@ -223,7 +239,8 @@ public class Client extends Thread {
 
             if (fileNeededList.size() == 0) {
                 System.out.println("Merging files...");
-                done = true;
+                //done = true;
+                readyforClient.setValue(true);
                 Collections.sort(downloadedList);
                 String fname = "merge-"+myPortNumber+".jpg";
                 mergeFiles(downloadedList, new File(fname));

@@ -60,7 +60,7 @@ public class Server extends Thread {
             try {
                 serverSocket = new ServerSocket(pNumber);
                 //while (true) {
-                System.out.println("Waiting... on port " + pNumber);
+                System.out.println("Waiting on port " + pNumber);
                 try {
                     sock = serverSocket.accept();
                     System.out.println("Accepted connection: " + sock);
