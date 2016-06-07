@@ -76,6 +76,7 @@ public class ClientUpload extends Thread {
         
         Thread.sleep(5000);
         new ClientUpload(myPortNumber, "L").start();
+        System.out.println("DONE VALUE: " + done);
         //while (!done) {
             Thread.sleep(5000);
             new ClientUpload(downloadNeighbor, downloadPortNumber, "D").start();
@@ -92,9 +93,9 @@ public class ClientUpload extends Thread {
                 serverSocket = new ServerSocket(myPortNumber);
                 System.out.println("Waiting on port " + myPortNumber);
                 try {
-                        sock = serverSocket.accept();
-                        System.out.println("Accepted connection: " + sock);
-                        receiveFILES(sock);
+                    sock = serverSocket.accept();
+                    System.out.println("Accepted connection: " + sock);
+                    receiveFILES(sock);
                 }
                 finally {
                     if (bis != null) bis.close();
@@ -144,6 +145,8 @@ public class ClientUpload extends Thread {
                     connected = true;
                     System.out.println("Connecting on port " + portNumber);
                     receiveFILES(sock);
+                    String fname = "summary-"+myPortNumber+".txt";
+                    convertListToFile(downloadedList, fname);
                 }
                 catch (Exception e) {
                     System.out.println("Connection failed");
@@ -300,6 +303,14 @@ public class ClientUpload extends Thread {
         FileWriter writer = new FileWriter(fileName);
         for (int i = 0; i < flistArr.size(); i++) {
             writer.write(flistArr.get(i) + "\n");
+        }
+        writer.close();
+    }
+    
+    public static void convertListToFile(List<File> flist, String fileName) throws IOException {
+        FileWriter writer = new FileWriter(fileName);
+        for (int i = 0; i < flist.size(); i++) {
+            writer.write(flist.get(i) + "\n");
         }
         writer.close();
     }
