@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
@@ -47,7 +48,9 @@ public class Client extends Thread {
         }
         else if (mode.equals("L")) {
             try {
-                waitForFiles();
+                while (true) {
+                    waitForFiles();
+                }
             } catch (IOException | InterruptedException ex) {
                 //ex.printStackTrace();
             }
@@ -73,8 +76,10 @@ public class Client extends Thread {
         
        Thread.sleep(5000);
         new Client(myPortNumber, "L").start();
-        Thread.sleep(5000);
-        new Client(downloadNeighbor, downloadPortNumber, "D").start();
+        //while (!done) {
+            Thread.sleep(5000);
+            new Client(downloadNeighbor, downloadPortNumber, "D").start();
+        //}
     }
     
     public static void waitForFiles() throws IOException, InterruptedException {
@@ -215,8 +220,9 @@ public class Client extends Thread {
 
             if (fileNeededList.size() == 0) {
                 System.out.println("Merging files...");
-                mergeFiles(downloadedList, new File("merge.jpg"));
                 done = true;
+                Collections.sort(downloadedList);
+                mergeFiles(downloadedList, new File("merge.jpg"));
             }
         //}
     }
