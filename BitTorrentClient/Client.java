@@ -168,11 +168,11 @@ public class Client extends Thread {
                     connected = true;
                     System.out.println("Connecting on port " + portNumber);
                     receiveFILES(sock);
-                    String fname = "summary-"+myPortNumber+".txt";
-                    convertListToFile(downloadedList, fname);
+                    String folderName = "Peer-" + myPortNumber + "/";
+                    convertListToFile(downloadedList, folderName+"summary.txt");
                 }
                 catch (Exception e) {
-                    System.out.println("Connection failed 1");
+                    System.out.println("Connection failed");
                     try {
                         Thread.sleep(2500);
                     } catch (InterruptedException ex) {
@@ -251,8 +251,8 @@ public class Client extends Thread {
                 //done = true;
                 readyforClient.setValue(true);
                 Collections.sort(downloadedList);
-                String fname = "merge-"+myPortNumber+".jpg";
-                mergeFiles(downloadedList, new File(fname));
+                String folderName = "Peer-" + myPortNumber + "/";
+                mergeFiles(downloadedList, new File(folderName+"merge.jpg"));
             }
         //}
     }
