@@ -88,6 +88,11 @@ public class Client extends Thread {
         downloadPortNumber = Integer.parseInt(args[5]);
         myPortNumber = Integer.parseInt(args[6]);
         
+        File dir = new File("Peer-" + myPortNumber);
+        if (!dir.exists()) {
+            dir.mkdir();
+        }
+        
         // Initialize - get files from server
         initialPull(serverName, serverPortNumber);
         
@@ -129,16 +134,18 @@ public class Client extends Thread {
     
     public static void sendFileList() throws IOException, InterruptedException {
         List<File> flist = new ArrayList<File>();
-        convertArrayToFile(fileNeededList, "uploadFileList.txt");
-        flist.add(new File("uploadFileList.txt"));
+
+        String folderName = "Peer-" + myPortNumber + "/";
+        convertArrayToFile(fileNeededList, folderName+"uploadFileList.txt");
+        flist.add(new File(folderName+"uploadFileList.txt"));
         boolean connected = false;
-        // TO DO
-        while (connected == false) {
+        while (connected == false && readyforClient.read() == false) {
             try {
                 Socket sock = null;
                 sock = new Socket(downloadNeighbor, downloadPortNumber);
                 connected = true;
                 sendFILES(flist, sock);
+                Thread.sleep(2000);
             }
             catch (Exception e) {
                 System.out.println("Trying to download connection... NOT FOUND on port number " + downloadPortNumber);
@@ -165,7 +172,7 @@ public class Client extends Thread {
                     convertListToFile(downloadedList, fname);
                 }
                 catch (Exception e) {
-                    System.out.println("Connection failed");
+                    System.out.println("Connection failed 1");
                     try {
                         Thread.sleep(2500);
                     } catch (InterruptedException ex) {
@@ -190,6 +197,8 @@ public class Client extends Thread {
         //while (true) {
             DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             try {
+                //String folderName = "";
+                String folderName = "Peer-" + myPortNumber + "/";
                 // get number of files being received
                 int numOfFiles = dis.readInt();
                 // read all the files
@@ -204,9 +213,9 @@ public class Client extends Thread {
                         fileNeededList = convertFileToArray("fileNameList.txt");
                     }
                     else if (file.getName().equals("uploadFileList.txt")) {
-                        saveFile(filename, size, dis);
+                        saveFile(folderName+filename, size, dis);
                         uploadList.clear();
-                        uploadList = convertFileToArray(filename);
+                        uploadList = convertFileToArray(folderName+filename);
                         for (int j = 0; j < uploadList.size(); j++) {
                             for (int k = 0; k < downloadedList.size(); k++) {
                                 if (uploadList.get(j).equals(downloadedList.get(k).getName())) {
@@ -234,7 +243,7 @@ public class Client extends Thread {
                 }
             }
             catch (EOFException e) {
-                //break;
+                e.printStackTrace();
             }
 
             if (fileNeededList.size() == 0) {
