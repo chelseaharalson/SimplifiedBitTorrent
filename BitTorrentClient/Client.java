@@ -12,15 +12,15 @@ import java.util.Scanner;
  */
 public class Client extends Thread {
     
-    public static class ReadyForClient {
-        private boolean ready = true;
+    public static class ClientDone {
+        private boolean done = true;
         
         public synchronized void setValue(boolean val) {
-            ready = val;
+            done = val;
         }
         
         public synchronized boolean read() {
-            return ready;
+            return done;
         }
     }
 
@@ -36,8 +36,7 @@ public class Client extends Thread {
     static int downloadPortNumber = 0;
     static int myPortNumber = 0;
     static String mode = "";
-    static boolean done = false;
-    final static ReadyForClient readyforClient = new ReadyForClient();
+    final static ClientDone done = new ClientDone();
 
     public Client(String HostName, int PortNumber, String Mode) {
         hostName = HostName;
@@ -55,7 +54,7 @@ public class Client extends Thread {
         if (mode.equals("D")) {
             try {
                 //System.out.println("Ready for client: " + readyforClient.read());
-                while (readyforClient.read() == false) {
+                while (done.read() == false) {
                     Thread.sleep(5000);
                     sendFileList();
                 }
@@ -96,12 +95,16 @@ public class Client extends Thread {
         // Initialize - get files from server
         initialPull(serverName, serverPortNumber);
         
-        readyforClient.setValue(false);
+        done.setValue(false);
         
         Thread.sleep(5000);
         new Client(myPortNumber, "L").start();
         Thread.sleep(5000);
-        new Client(downloadNeighbor, downloadPortNumber, "D").start();
+        //while (readyforClient.read() == false) {
+            //Thread.sleep(5000);
+            new Client(downloadNeighbor, downloadPortNumber, "D").start();
+        //}
+        
     }
     
     public static void waitForFiles() throws IOException, InterruptedException {
@@ -136,14 +139,14 @@ public class Client extends Thread {
         List<File> flist = new ArrayList<File>();
 
         String folderName = "Peer-" + myPortNumber + "/";
-        convertArrayToFile(fileNeededList, folderName+"uploadFileList.txt");
-        flist.add(new File(folderName+"uploadFileList.txt"));
-        boolean connected = false;
-        while (connected == false && readyforClient.read() == false) {
+        //convertArrayToFile(fileNeededList, folderName+"uploadFileList-"+myPortNumber+".txt");
+        flist.add(new File(folderName+"uploadFileList-"+myPortNumber+".txt"));
+        //boolean connected = false;
+        //while (connected == false && readyforClient.read() == false) {
             try {
                 Socket sock = null;
                 sock = new Socket(downloadNeighbor, downloadPortNumber);
-                connected = true;
+                //connected = true;
                 sendFILES(flist, sock);
                 Thread.sleep(2000);
             }
@@ -152,7 +155,7 @@ public class Client extends Thread {
                 Thread.sleep(5000);
                 //e.printStackTrace();
             }
-        }
+        //}
     }
     
     public static void initialPull(String hostName, int portNumber) throws IOException {
@@ -212,21 +215,26 @@ public class Client extends Thread {
                         saveFile(filename, size, dis);
                         fileNeededList = convertFileToArray("fileNameList.txt");
                     }
-                    else if (file.getName().equals("uploadFileList.txt")) {
+                    else if (file.getName().equals("uploadFileList-"+uploadPortNumber+".txt")) {
+                    //else if (file.getName().equals("uploadFileList-"+downloadPortNumber+".txt")) {
                         saveFile(folderName+filename, size, dis);
+                        convertListToFile(downloadedList, folderName+"testDL.txt");
                         uploadList.clear();
+                        uploadFileList.clear();
                         uploadList = convertFileToArray(folderName+filename);
+                        System.out.println("@@@@@@@@@@@ UPLOAD LIST: " + uploadList);
                         for (int j = 0; j < uploadList.size(); j++) {
                             for (int k = 0; k < downloadedList.size(); k++) {
                                 if (uploadList.get(j).equals(downloadedList.get(k).getName())) {
-                                    System.out.println("Peer-" + myPortNumber + " has this file: " + "FileChunks-"+myPortNumber+"/" + downloadedList.get(k).getName() + " and will send to Peer-" + downloadPortNumber);
+                                    System.out.println("Peer-" + myPortNumber + " has this file: " + "FileChunks-"+myPortNumber+"/" + downloadedList.get(k).getName() + " and will send to Peer-" + uploadPortNumber);
                                     uploadFileList.add(new File("FileChunks-"+myPortNumber+"/" + downloadedList.get(k).getName()));
                                 }
                             }
                         }
+                        convertListToFile(uploadFileList, folderName+"testUL.txt");
                         try {
                             Socket sock = null;
-                            sock = new Socket(downloadNeighbor, downloadPortNumber);
+                            sock = new Socket(uploadNeighbor, uploadPortNumber);
                             sendFILES(uploadFileList, sock);
                         }
                         catch (Exception e) {
@@ -238,21 +246,25 @@ public class Client extends Thread {
                     else {
                         downloadedList.add(file);
                         fileNeededList.remove(file.getName());
+                        //convertArrayToFile(fileNeededList, folderName+"uploadFileList-"+myPortNumber+".txt");
+                        //System.out.println("@@@@@@@@@@@@@@@@@@@ SAVING:    " + "FileChunks-"+myPortNumber+"/"+filename);
                         saveFile("FileChunks-"+myPortNumber+"/"+filename, size, dis);
                     }
                 }
+                // TO DO
+                convertArrayToFile(fileNeededList, folderName+"uploadFileList-"+myPortNumber+".txt");
             }
             catch (EOFException e) {
                 e.printStackTrace();
             }
 
-            if (fileNeededList.size() == 0) {
+            if (fileNeededList.size() == 0 && done.read() == false) {
                 System.out.println("Merging files...");
-                //done = true;
-                readyforClient.setValue(true);
                 Collections.sort(downloadedList);
+                //System.out.println("+++++++++++++++++     " + downloadedList);
                 String folderName = "Peer-" + myPortNumber + "/";
                 mergeFiles(downloadedList, new File(folderName+"merge.jpg"));
+                done.setValue(true);
             }
         //}
     }
