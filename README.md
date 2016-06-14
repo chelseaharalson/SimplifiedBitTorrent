@@ -1,5 +1,5 @@
 # SimplifiedBitTorrent
-This project creates a peer-to-peer network for file downloading. It resembles some features of Bit-torrent, but much simplified. There are two pieces of software – peer and file owner. The file owner has a file, and it breaks the file into chunks of 100KB, each stored as a separate file. The file owner listens on a TCP port. It should be designed as a server that can run multiple threads to serve multiple clients simultaneously.
+This project creates a peer-to-peer network for file downloading. It resembles some features of BitTorrent, but much simplified. There are two pieces of software – peer and file owner. The file owner has a file, and it breaks the file into chunks of 100KB, each stored as a separate file. The file owner listens on a TCP port. It is designed as a server that can run multiple threads to serve multiple clients simultaneously. After a peer has all file chunks, it combines them for a single file.
 
 ## Parameters:
 ```
