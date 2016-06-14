@@ -59,7 +59,6 @@ public class Server extends Thread {
             
             try {
                 serverSocket = new ServerSocket(pNumber);
-                //while (true) {
                 System.out.println("Waiting on port " + pNumber);
                 try {
                     sock = serverSocket.accept();
@@ -72,7 +71,6 @@ public class Server extends Thread {
                     if (os != null) os.close();
                     if (sock != null) sock.close();
                 }
-                //}
             }
             finally {
                 if (serverSocket != null) serverSocket.close();
@@ -122,8 +120,6 @@ public class Server extends Thread {
             int temp = 0;
             
             while ((temp = bis.read(buffer)) > 0) {
-                // write each chunk of data into a separate file with different numbers in the name
-                //File newFile = new File(f.getParent(), name + "." + String.format("%03d", partCounter++));
                 File newFile = new File("FileChunks/" + name + "." + String.format("%03d", partCounter++));
                 try (FileOutputStream out = new FileOutputStream(newFile)) {
                     out.write(buffer, 0, temp); // temp is the chunk size
@@ -141,7 +137,7 @@ public class Server extends Thread {
     public static void createFileList(String fileName) throws IOException {
         numberOfFiles = (int) Math.ceil((double)numberOfFiles / 5);
         System.out.println("Number of files to distribute to each peer: " + numberOfFiles);
-        // TO DO: change to numberOfFiles when 5 peers work
+        // TO DO: change to numberOfFiles
         int pos = filePosition;
         filePosition = filePosition + numOfFiles + 1;
         int partCounter = 1;
@@ -179,7 +175,6 @@ public class Server extends Thread {
 
         // send every file in list
         for (int i = 0; i < files.size(); i++) {
-        //for (File file : files) {
             int bytesRead = 0;
             fis = new FileInputStream(files.get(i));
             // send filename                        
@@ -198,7 +193,6 @@ public class Server extends Thread {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            // close the filestream
             fis.close();
         }
         System.out.println("Finished sending files");
