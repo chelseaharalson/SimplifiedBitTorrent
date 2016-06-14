@@ -8,7 +8,8 @@ java Client <host name> <server port number> <upload port number> <download port
 ```
 
 ## Example Run For 5 Clients:
-```java Server 8397 13
+```
+java Server 8397 13
 java Client localhost 8397 9004 9001 9000
 java Client localhost 8397 9000 9002 9001
 java Client localhost 8397 9001 9003 9002
