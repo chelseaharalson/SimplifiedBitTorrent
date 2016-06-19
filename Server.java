@@ -35,8 +35,9 @@ public class Server extends Thread {
     static List<File> fileList = new ArrayList<File>();
     static List<File> partialFileList = new ArrayList<File>();
     static int filePosition = 1;
-    static int numOfFiles = 0;
+    //static int numOfFiles = 0;
     static int numberOfFiles = 0;
+    static int numFiles = 0;
     static FileInputStream fis = null;
     static BufferedInputStream bis = null;
     static OutputStream os = null;
@@ -50,7 +51,7 @@ public class Server extends Thread {
     @Override
     public void run() {
         try {
-            createFileList("image2.jpg");
+            createFileList("image.png");
             FileInputStream fis = null;
             BufferedInputStream bis = null;
             OutputStream os = null;
@@ -82,15 +83,15 @@ public class Server extends Thread {
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        if (args.length != 2) {
-            System.err.println("Usage: java Server <port number> <numOfFiles>");
+        if (args.length != 1) {
+            System.err.println("Usage: java Server <port number>");
             System.exit(1);
         }
         int portNumber = Integer.parseInt(args[0]);
-        numOfFiles = Integer.parseInt(args[1]);
+        //numOfFiles = Integer.parseInt(args[1]);
         
         try {
-            splitFile(new File("image2.jpg"));
+            splitFile(new File("image.png"));
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -105,6 +106,7 @@ public class Server extends Thread {
         }
     }
     
+    // Splits file into pieces of 100 kb each
     public static void splitFile(File f) throws IOException {
         int partCounter = 1;
         int fileSize = 100 * 1024; // 100 kb
@@ -135,11 +137,10 @@ public class Server extends Thread {
     }
     
     public static void createFileList(String fileName) throws IOException {
-        numberOfFiles = (int) Math.ceil((double)numberOfFiles / 5);
-        System.out.println("Number of files to distribute to each peer: " + numberOfFiles);
-        // TO DO: change to numberOfFiles
+        numFiles = (int) Math.ceil((double)numberOfFiles / 5);
+        System.out.println("Number of files to distribute to each peer: " + numFiles);
         int pos = filePosition;
-        filePosition = filePosition + numOfFiles + 1;
+        filePosition = filePosition + numFiles + 1;
         int partCounter = 1;
         String fName = "";
         partialFileList.clear();
@@ -148,12 +149,13 @@ public class Server extends Thread {
         System.out.println("Created " + oFile);
         for (File f : fileList) {
             fName = fileName + "." + String.format("%03d", partCounter++);
-            if (f.getName().equals(fName) && partCounter >= pos && partCounter <= pos+numOfFiles) {
+            if (f.getName().equals(fName) && partCounter >= pos && partCounter <= pos+numFiles) {
                 partialFileList.add(f);
             }
         }
     }
     
+    // Create list containing all file names
     public static File createTextFileList(List<File> fList) throws FileNotFoundException, IOException {
         BufferedWriter writer = null;
         File outputFile = new File("fileNameList.txt");
@@ -168,6 +170,7 @@ public class Server extends Thread {
         return outputFile;
     }
     
+    // Send files over socket to clients
     public static void sendFILES(List<File> files, Socket socket) throws IOException {
         DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         long fileSize;

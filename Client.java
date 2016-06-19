@@ -35,6 +35,7 @@ public class Client extends Thread {
     static int downloadPortNumber = 0;
     static int myPortNumber = 0;
     static String mode = "";
+    static boolean fromServer = false;
     final static ClientDone done = new ClientDone();
 
     public Client(String HostName, int PortNumber, String Mode) {
@@ -52,6 +53,7 @@ public class Client extends Thread {
     public void run() {
         if (mode.equals("D")) {
             try {
+                // If peer doesn't have all files and hasn't merged, then download mode... send file list
                 while (done.read() == false) {
                     Thread.sleep(5000);
                     sendFileList();
@@ -63,6 +65,7 @@ public class Client extends Thread {
         else if (mode.equals("L")) {
             try {
                 while (true) {
+                    // While listening, wait for files
                     waitForFiles();
                 }
             } catch (IOException | InterruptedException ex) {
@@ -91,6 +94,7 @@ public class Client extends Thread {
         // Initialize - get files from server
         initialPull(serverName, serverPortNumber);
         
+        fromServer = false;
         done.setValue(false);
         
         Thread.sleep(5000);
@@ -99,6 +103,7 @@ public class Client extends Thread {
         new Client(serverName, downloadPortNumber, "D").start(); 
     }
     
+    // Wait for files
     public static void waitForFiles() throws IOException, InterruptedException {
         try {
             FileInputStream fis = null;
@@ -127,10 +132,11 @@ public class Client extends Thread {
         }
     }
     
+    // Send chunk ID list
     public static void sendFileList() throws IOException, InterruptedException {
         List<File> flist = new ArrayList<File>();
         String folderName = "Peer-" + myPortNumber + "/";
-        flist.add(new File(folderName+"uploadFileList-"+myPortNumber+".txt"));
+        flist.add(new File(folderName+"chunkIDlist-"+myPortNumber+".txt"));
         try {
             Socket sock = null;
             sock = new Socket(serverName, downloadPortNumber);
@@ -144,6 +150,7 @@ public class Client extends Thread {
         }
     }
     
+    // Initial pull from server
     public static void initialPull(String hostName, int portNumber) throws IOException {
         FileOutputStream fos = null;
         BufferedOutputStream bos = null;
@@ -156,6 +163,7 @@ public class Client extends Thread {
                     sock = new Socket(hostName, portNumber);
                     connected = true;
                     System.out.println("Connecting on port " + portNumber);
+                    fromServer = true;
                     receiveFILES(sock);
                     String folderName = "Peer-" + myPortNumber + "/";
                     convertListToFile(downloadedList, folderName+"summary.txt");
@@ -177,6 +185,7 @@ public class Client extends Thread {
         }
     }
     
+    // Receive files from server or other peers
     public static void receiveFILES(Socket socket) throws IOException, InterruptedException {
         File fileChunksDir = new File("FileChunks-"+myPortNumber);
         if (!fileChunksDir.exists()) {
@@ -197,7 +206,8 @@ public class Client extends Thread {
                     saveFile(filename, size, dis);
                     fileNeededList = convertFileToArray("fileNameList.txt");
                 }
-                else if (file.getName().equals("uploadFileList-"+uploadPortNumber+".txt")) {
+                else if (file.getName().equals("chunkIDlist-"+uploadPortNumber+".txt")) {
+                    // uploadFileList is chunkIDlist
                     saveFile(folderName+filename, size, dis);
                     uploadList.clear();
                     uploadFileList.clear();
@@ -227,21 +237,23 @@ public class Client extends Thread {
                     saveFile("FileChunks-"+myPortNumber+"/"+filename, size, dis);
                 }
             }
-            convertArrayToFile(fileNeededList, folderName+"uploadFileList-"+myPortNumber+".txt");
+            convertArrayToFile(fileNeededList, folderName+"chunkIDlist-"+myPortNumber+".txt");
         }
         catch (EOFException e) {
             e.printStackTrace();
         }
 
+        // If peer has all files, then merge them into 1
         if (fileNeededList.size() == 0 && done.read() == false) {
             System.out.println("Merging files...");
             Collections.sort(downloadedList);
             String folderName = "Peer-" + myPortNumber + "/";
-            mergeFiles(downloadedList, new File(folderName+"merge.jpg"));
+            mergeFiles(downloadedList, new File(folderName+"merge.png"));
             done.setValue(true);
         }
     }
     
+    // Save file to disk
     public static void saveFile(String filename, long size, DataInputStream dis) throws IOException {
         FileOutputStream fos = new FileOutputStream(filename);
         long total = 0;
@@ -252,9 +264,15 @@ public class Client extends Thread {
             total += count;
         }
         fos.close();
-        System.out.println("Received File: " + filename + " (" + size + " bytes)");
+        if (fromServer == true) {
+            System.out.println("Received File: " + filename + " (" + size + " bytes) from File Owner");
+        }
+        else {
+            System.out.println("Received File: " + filename + " (" + size + " bytes) from Peer-" + downloadPortNumber);
+        }
     }
     
+    // Send files to other peers
     public static void sendFILES(List<File> files, Socket socket) throws IOException {
         FileInputStream fis = null;
         DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
@@ -275,7 +293,7 @@ public class Client extends Thread {
             try {
                 while ((bytesRead = fis.read(buff)) != -1) {
                     dos.write(buff, 0, bytesRead);
-                    System.out.println("Sending file: " + file.getName() + " (" + buff.length + " bytes) on port number " + socket.getPort());
+                    System.out.println("Sending file: " + file.getName() + " (" + buff.length + " bytes) to Peer-" + socket.getPort());
                 }
                 dos.flush();
             } catch (IOException e) {
@@ -288,6 +306,7 @@ public class Client extends Thread {
         socket.close();
     }
     
+    // Merge all files into one
     public static void mergeFiles(List<File> files, File into) throws IOException {
         try (BufferedOutputStream mergingStream = new BufferedOutputStream(new FileOutputStream(into))) {
             String fi = "";
@@ -299,6 +318,7 @@ public class Client extends Thread {
         }
     }
     
+    // Read from a file and put into arraylist of type string
     public static ArrayList<String> convertFileToArray(String fileName) throws FileNotFoundException {
         Scanner s = new Scanner(new File(fileName));
         ArrayList<String> fList = new ArrayList<String>();
@@ -309,6 +329,7 @@ public class Client extends Thread {
         return fList;
     }
     
+    // Read arraylist and write to a file
     public static void convertArrayToFile(ArrayList<String> flistArr, String fileName) throws IOException {
         FileWriter writer = new FileWriter(fileName);
         for (int i = 0; i < flistArr.size(); i++) {
@@ -317,6 +338,7 @@ public class Client extends Thread {
         writer.close();
     }
     
+    // Read list and write to a file
     public static void convertListToFile(List<File> flist, String fileName) throws IOException {
         FileWriter writer = new FileWriter(fileName);
         for (int i = 0; i < flist.size(); i++) {
