@@ -38,6 +38,7 @@ public class Server extends Thread {
     //static int numOfFiles = 0;
     static int numberOfFiles = 0;
     static int numFiles = 0;
+    static String fileName = "";
     static FileInputStream fis = null;
     static BufferedInputStream bis = null;
     static OutputStream os = null;
@@ -51,7 +52,7 @@ public class Server extends Thread {
     @Override
     public void run() {
         try {
-            createFileList("image.png");
+            createFileList(fileName);
             FileInputStream fis = null;
             BufferedInputStream bis = null;
             OutputStream os = null;
@@ -83,15 +84,16 @@ public class Server extends Thread {
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        if (args.length != 1) {
-            System.err.println("Usage: java Server <port number>");
+        if (args.length != 2) {
+            System.err.println("Usage: java Server <port number> <filename>");
             System.exit(1);
         }
         int portNumber = Integer.parseInt(args[0]);
         //numOfFiles = Integer.parseInt(args[1]);
+        fileName = args[1];
         
         try {
-            splitFile(new File("image.png"));
+            splitFile(new File(fileName));
         } catch (IOException ex) {
             ex.printStackTrace();
         }

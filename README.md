@@ -3,13 +3,13 @@ This project creates a peer-to-peer network for file downloading. It resembles s
 
 ## Parameters:
 ```
-java Server <server port number>
+java Server <server port number> <filename>
 java Client <host name> <server port number> <upload port number> <download port number> <my port number>
 ```
 
 ## Example Run For 5 Clients:
 ```
-java Server 8397
+java Server 8397 image.png
 java Client localhost 8397 9004 9001 9000
 java Client localhost 8397 9000 9002 9001
 java Client localhost 8397 9001 9003 9002

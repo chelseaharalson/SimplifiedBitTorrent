@@ -34,6 +34,7 @@ public class Client extends Thread {
     static int uploadPortNumber = 0;
     static int downloadPortNumber = 0;
     static int myPortNumber = 0;
+    static String mergeName = "";
     static String mode = "";
     static boolean fromServer = false;
     final static ClientDone done = new ClientDone();
@@ -212,6 +213,10 @@ public class Client extends Thread {
                     uploadList.clear();
                     uploadFileList.clear();
                     uploadList = convertFileToArray(folderName+filename);
+                    String mname = downloadedList.get(0).getName();
+                    int dot1 = mname.indexOf(".");
+                    int dot2 = mname.indexOf(".", dot1 + 1);
+                    mergeName = mname.substring(0, dot2);
                     for (int j = 0; j < uploadList.size(); j++) {
                         for (int k = 0; k < downloadedList.size(); k++) {
                             if (uploadList.get(j).equals(downloadedList.get(k).getName())) {
@@ -248,7 +253,7 @@ public class Client extends Thread {
             System.out.println("Merging files...");
             Collections.sort(downloadedList);
             String folderName = "Peer-" + myPortNumber + "/";
-            mergeFiles(downloadedList, new File(folderName+"merge.png"));
+            mergeFiles(downloadedList, new File(folderName+"merge-"+mergeName));
             done.setValue(true);
         }
     }
